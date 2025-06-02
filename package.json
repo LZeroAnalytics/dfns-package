@@ -6,6 +6,9 @@
   "_moduleAliases": {
     "@": "dist"
   },
+  "_moduleAliasesDev": {
+    "@": "src"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",

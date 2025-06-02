@@ -1,3 +1,9 @@
+import { addAliases } from "module-alias";
+if (process.env.NODE_ENV !== "production") {
+  addAliases({
+    "@": __dirname
+  });
+}
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
