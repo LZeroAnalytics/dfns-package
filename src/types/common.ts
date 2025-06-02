@@ -26,9 +26,9 @@ export interface DfnsRequestHeaders {
   'User-Agent': string;
   'Authorization'?: string;
   'X-DFNS-APPID': string;
-  'X-DFNS-NONCE': string;
-  'X-DFNS-SIGNINGKEY': string;
-  'X-DFNS-SIGNATURE': string;
+  'X-DFNS-NONCE'?: string;
+  'X-DFNS-SIGNINGKEY'?: string;
+  'X-DFNS-SIGNATURE'?: string;
 }
 
 export interface SignedRequest {

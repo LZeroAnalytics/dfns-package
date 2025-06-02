@@ -5,19 +5,29 @@ import { DfnsRequestHeaders, DfnsResponse } from '@/types/common';
 import { AuthenticationError, DfnsApiError } from '@/utils/errors';
 import { logger } from '@/utils/logger';
 
+export interface DfnsCredentials {
+  appId: string;
+  authToken?: string;
+  signingKeyId?: string;
+  privateKey?: string;
+  baseUrl?: string;
+}
+
 export class DfnsClient {
   private client: AxiosInstance;
-  private privateKey: string;
+  private privateKey?: string;
   private appId: string;
-  private signingKeyId: string;
+  private signingKeyId?: string;
+  private authToken?: string;
 
-  constructor() {
-    this.privateKey = config.dfns.privateKey;
-    this.appId = config.dfns.appId;
-    this.signingKeyId = config.dfns.signingKeyId;
+  constructor(credentials: DfnsCredentials) {
+    this.privateKey = credentials.privateKey;
+    this.appId = credentials.appId;
+    this.signingKeyId = credentials.signingKeyId;
+    this.authToken = credentials.authToken;
 
     this.client = axios.create({
-      baseURL: config.dfns.apiUrl,
+      baseURL: credentials.baseUrl || config.dfns.apiUrl,
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
@@ -85,20 +95,29 @@ export class DfnsClient {
     body?: any,
     additionalHeaders?: Record<string, string>
   ): DfnsRequestHeaders {
-    const timestamp = CryptoService.generateTimestamp();
-    const nonce = CryptoService.generateNonce();
-    const canonicalRequest = CryptoService.createCanonicalRequest(method, path, timestamp, body);
-    const signature = CryptoService.signRequest(canonicalRequest, this.privateKey);
-
-    return {
+    const headers: DfnsRequestHeaders = {
       'Content-Type': 'application/json',
       'User-Agent': 'dfns-package/1.0.0',
       'X-DFNS-APPID': this.appId,
-      'X-DFNS-NONCE': nonce,
-      'X-DFNS-SIGNINGKEY': this.signingKeyId,
-      'X-DFNS-SIGNATURE': signature,
       ...additionalHeaders,
     };
+
+    if (this.authToken) {
+      headers['Authorization'] = `Bearer ${this.authToken}`;
+    }
+
+    if (this.privateKey && this.signingKeyId) {
+      const timestamp = CryptoService.generateTimestamp();
+      const nonce = CryptoService.generateNonce();
+      const canonicalRequest = CryptoService.createCanonicalRequest(method, path, timestamp, body);
+      const signature = CryptoService.signRequest(canonicalRequest, this.privateKey);
+      
+      headers['X-DFNS-NONCE'] = nonce;
+      headers['X-DFNS-SIGNINGKEY'] = this.signingKeyId;
+      headers['X-DFNS-SIGNATURE'] = signature;
+    }
+
+    return headers;
   }
 
   async request<T = any>(
