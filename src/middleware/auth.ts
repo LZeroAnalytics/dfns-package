@@ -14,63 +14,76 @@ export interface AuthenticatedRequest extends Request {
     signingKeyId: string;
     nonce: string;
   };
+  dfnsCredentials?: {
+    appId: string;
+    authToken?: string;
+    signingKeyId?: string;
+    privateKey?: string;
+    appSecret?: string;
+  };
 }
 
-export const validateSignature = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+export const extractCredentials = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
   try {
     const appId = req.headers['x-dfns-appid'] as string;
-    const nonce = req.headers['x-dfns-nonce'] as string;
+    const authToken = req.headers.authorization?.replace('Bearer ', '');
     const signingKeyId = req.headers['x-dfns-signingkey'] as string;
+    const appSecret = req.headers['x-dfns-appsecret'] as string;
+    const nonce = req.headers['x-dfns-nonce'] as string;
     const signature = req.headers['x-dfns-signature'] as string;
 
-    if (!appId || !nonce || !signingKeyId || !signature) {
-      throw new ValidationError('Missing required signature headers');
+    if (!appId) {
+      throw new ValidationError('Missing required x-dfns-appid header');
     }
 
-    // const timestamp = Date.now();
-    // const canonicalRequest = CryptoService.createCanonicalRequest(
-    //   req.method,
-    //   req.path,
-    //   timestamp,
-    //   req.body
-    // );
-
-    req.signature = {
-      isValid: true,
+    req.dfnsCredentials = {
+      appId,
+      authToken,
       signingKeyId,
-      nonce,
+      appSecret,
     };
 
-    logger.info('Request signature validated', { appId, signingKeyId, nonce });
+    if (signingKeyId && nonce && signature) {
+      req.signature = {
+        isValid: true,
+        signingKeyId,
+        nonce,
+      };
+    }
+
+    logger.info('DFNS credentials extracted', { appId, hasAuthToken: !!authToken, hasSignature: !!(signingKeyId && signature) });
     next();
   } catch (error) {
-    logger.error('Signature validation failed', { error, path: req.path });
-    next(new AuthenticationError('Invalid request signature'));
+    logger.error('Credential extraction failed', { error, path: req.url });
+    next(new AuthenticationError('Invalid DFNS credentials'));
   }
 };
 
 export const requireAuth = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
-  const authHeader = req.headers.authorization;
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return next(new AuthenticationError('Missing or invalid authorization header'));
+  if (!req.dfnsCredentials?.appId) {
+    return next(new AuthenticationError('Missing DFNS credentials'));
+  }
+
+  const hasAuthToken = !!req.dfnsCredentials.authToken;
+  const hasSignature = !!req.signature?.isValid;
+
+  if (!hasAuthToken && !hasSignature) {
+    return next(new AuthenticationError('Missing authentication: either Bearer token or valid signature required'));
   }
 
   try {
-    // const token = authHeader.substring(7);
-    
     req.user = {
       id: 'service-account',
-      orgId: '6qtkb 4he9b',
-      appId: 'ap-5f357-13d6g-8pirkkji193gu11q',
+      orgId: 'dynamic-org',
+      appId: req.dfnsCredentials.appId,
       permissions: ['*'],
     };
 
-    logger.info('User authenticated', { userId: req.user.id, orgId: req.user.orgId });
+    logger.info('User authenticated', { userId: req.user.id, appId: req.user.appId, authMethod: hasAuthToken ? 'token' : 'signature' });
     next();
   } catch (error) {
     logger.error('Authentication failed', { error });
-    next(new AuthenticationError('Invalid authentication token'));
+    next(new AuthenticationError('Authentication failed'));
   }
 };
 

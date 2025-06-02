@@ -1,19 +1,22 @@
 import { Request, Response, NextFunction } from 'express';
-import { DfnsClient } from '@/services/dfns-client';
+import { DfnsClient, DfnsCredentials } from '@/services/dfns-client';
 import { CustomLogicHooks } from '@/types/common';
 import { logger } from '@/utils/logger';
+import { AuthenticatedRequest } from '@/middleware/auth';
 
 export abstract class BaseRoute {
-  protected dfnsClient: DfnsClient;
   protected hooks: CustomLogicHooks;
 
   constructor(hooks: CustomLogicHooks = {}) {
-    this.dfnsClient = new DfnsClient();
     this.hooks = hooks;
   }
 
+  protected createDfnsClient(credentials: DfnsCredentials): DfnsClient {
+    return new DfnsClient(credentials);
+  }
+
   protected async executeWithHooks(
-    req: Request,
+    req: AuthenticatedRequest,
     res: Response,
     next: NextFunction,
     dfnsOperation: () => Promise<any>
@@ -32,7 +35,7 @@ export abstract class BaseRoute {
 
       res.json(finalResponse);
     } catch (error) {
-      logger.error('Route execution failed', { error, path: req.path });
+      logger.error('Route execution failed', { error, path: req.url });
 
       if (this.hooks.onError) {
         await this.hooks.onError(error, req, res);
@@ -43,15 +46,22 @@ export abstract class BaseRoute {
   }
 
   protected forwardRequest(method: string, path: string) {
-    return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    return async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
       await this.executeWithHooks(req, res, next, async () => {
+        if (!req.dfnsCredentials) {
+          throw new Error('DFNS credentials not found in request');
+        }
+
+        const dfnsClient = this.createDfnsClient(req.dfnsCredentials);
         const headers: Record<string, string> = {};
+        
         Object.entries(req.headers).forEach(([key, value]) => {
           if (typeof value === 'string') {
             headers[key] = value;
           }
         });
-        return this.dfnsClient.request(method, path, req.body, headers);
+        
+        return dfnsClient.request(method, path, req.body, headers);
       });
     };
   }
