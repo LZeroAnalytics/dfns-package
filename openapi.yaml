@@ -1,0 +1,1309 @@
+openapi: 3.1.0
+info:
+  title: DFNS API Mirror
+  description: Express.js TypeScript API that mirrors DFNS API behavior
+  version: 1.0.0
+  contact:
+    name: DFNS Package
+    url: https://github.com/LZeroAnalytics/dfns-package
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+  - url: https://api.dfns.io
+    description: DFNS Production API
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-DFNS-APPID
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "VALIDATION_ERROR"
+            message:
+              type: string
+              example: "Request validation failed"
+    AuthToken:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT access token
+        expiresIn:
+          type: integer
+          description: Token expiration time in seconds
+    UserActionChallenge:
+      type: object
+      properties:
+        challengeIdentifier:
+          type: string
+        challenge:
+          type: string
+        externalId:
+          type: string
+    Wallet:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        network:
+          type: string
+        status:
+          type: string
+          enum: [Active, Archived]
+        signingKey:
+          type: object
+          properties:
+            scheme:
+              type: string
+            curve:
+              type: string
+            publicKey:
+              type: string
+        address:
+          type: string
+        custodial:
+          type: boolean
+        imported:
+          type: boolean
+        exported:
+          type: boolean
+        dateCreated:
+          type: string
+          format: date-time
+        externalId:
+          type: string
+    Key:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        kind:
+          type: string
+          enum: [Key, Wallet]
+        scheme:
+          type: string
+        curve:
+          type: string
+        publicKey:
+          type: string
+        status:
+          type: string
+          enum: [Active, Archived]
+        dateCreated:
+          type: string
+          format: date-time
+        externalId:
+          type: string
+    FeeSponsor:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        network:
+          type: string
+        status:
+          type: string
+          enum: [Active, Archived]
+        balance:
+          type: string
+        address:
+          type: string
+        dateCreated:
+          type: string
+          format: date-time
+    Network:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        symbol:
+          type: string
+        chainId:
+          type: integer
+        nativeCurrency:
+          type: object
+          properties:
+            name:
+              type: string
+            symbol:
+              type: string
+            decimals:
+              type: integer
+        blockExplorerUrl:
+          type: string
+        rpcUrl:
+          type: string
+        testnet:
+          type: boolean
+    Policy:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [Active, Archived]
+        rules:
+          type: array
+          items:
+            type: object
+        dateCreated:
+          type: string
+          format: date-time
+    Permission:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        operations:
+          type: array
+          items:
+            type: string
+        predicates:
+          type: array
+          items:
+            type: object
+        status:
+          type: string
+          enum: [Active, Archived]
+        dateCreated:
+          type: string
+          format: date-time
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        url:
+          type: string
+        events:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [Active, Archived]
+        secret:
+          type: string
+        dateCreated:
+          type: string
+          format: date-time
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and return access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required:
+                - username
+                - password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthToken'
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: User logout
+      description: Invalidate current session
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+  /auth/delegated:
+    post:
+      tags:
+        - Authentication
+      summary: Delegated authentication
+      description: Authenticate using delegated credentials
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                signature:
+                  type: string
+              required:
+                - token
+                - signature
+      responses:
+        '200':
+          description: Delegated authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthToken'
+  /auth/action/init:
+    post:
+      tags:
+        - Authentication
+      summary: Initialize user action
+      description: Initialize a user action that requires signing
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userActionPayload:
+                  type: string
+                userActionHttpMethod:
+                  type: string
+                userActionHttpPath:
+                  type: string
+                userActionServerKind:
+                  type: string
+              required:
+                - userActionPayload
+                - userActionHttpMethod
+                - userActionHttpPath
+                - userActionServerKind
+      responses:
+        '200':
+          description: User action initialized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserActionChallenge'
+  /auth/action/sign:
+    post:
+      tags:
+        - Authentication
+      summary: Sign user action
+      description: Sign a user action challenge
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                challengeIdentifier:
+                  type: string
+                signedChallenge:
+                  type: string
+              required:
+                - challengeIdentifier
+                - signedChallenge
+      responses:
+        '200':
+          description: User action signed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userAction:
+                    type: string
+  /wallets:
+    get:
+      tags:
+        - Wallets
+      summary: List wallets
+      description: Retrieve a list of all wallets
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: paginationToken
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of wallets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Wallet'
+                  nextPageToken:
+                    type: string
+    post:
+      tags:
+        - Wallets
+      summary: Create wallet
+      description: Create a new wallet
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                network:
+                  type: string
+                externalId:
+                  type: string
+              required:
+                - name
+                - network
+      responses:
+        '201':
+          description: Wallet created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wallet'
+  /wallets/{walletId}:
+    get:
+      tags:
+        - Wallets
+      summary: Get wallet
+      description: Retrieve a specific wallet by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: walletId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Wallet details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wallet'
+        '404':
+          description: Wallet not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Wallets
+      summary: Update wallet
+      description: Update wallet properties
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: walletId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                externalId:
+                  type: string
+      responses:
+        '200':
+          description: Wallet updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wallet'
+  /wallets/{walletId}/transfers:
+    post:
+      tags:
+        - Wallets
+      summary: Create transfer
+      description: Create a new transfer from wallet
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: walletId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                kind:
+                  type: string
+                  enum: [Transaction, Evm, Bitcoin, Solana, Tron, Polygon]
+                to:
+                  type: string
+                amount:
+                  type: string
+                memo:
+                  type: string
+                externalId:
+                  type: string
+              required:
+                - kind
+                - to
+                - amount
+      responses:
+        '201':
+          description: Transfer created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                  txHash:
+                    type: string
+  /wallets/{walletId}/transfers/{transferId}:
+    get:
+      tags:
+        - Wallets
+      summary: Get transfer
+      description: Retrieve transfer details
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: walletId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: transferId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transfer details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                  txHash:
+                    type: string
+                  amount:
+                    type: string
+                  to:
+                    type: string
+                  dateCreated:
+                    type: string
+                    format: date-time
+  /keys:
+    get:
+      tags:
+        - Keys
+      summary: List keys
+      description: Retrieve a list of all keys
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: paginationToken
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of keys
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Key'
+                  nextPageToken:
+                    type: string
+    post:
+      tags:
+        - Keys
+      summary: Create key
+      description: Create a new cryptographic key
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                scheme:
+                  type: string
+                  enum: [ECDSA, EdDSA]
+                curve:
+                  type: string
+                  enum: [secp256k1, ed25519]
+                externalId:
+                  type: string
+              required:
+                - name
+                - scheme
+                - curve
+      responses:
+        '201':
+          description: Key created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Key'
+  /keys/{keyId}:
+    get:
+      tags:
+        - Keys
+      summary: Get key
+      description: Retrieve a specific key by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: keyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Key details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Key'
+        '404':
+          description: Key not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /keys/{keyId}/sign:
+    post:
+      tags:
+        - Keys
+      summary: Sign with key
+      description: Sign data using the specified key
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: keyId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: Base64 encoded message to sign
+              required:
+                - message
+      responses:
+        '200':
+          description: Signature generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  signature:
+                    type: string
+                    description: Base64 encoded signature
+                  publicKey:
+                    type: string
+                  algorithm:
+                    type: string
+  /fee-sponsors:
+    get:
+      tags:
+        - Fee Sponsors
+      summary: List fee sponsors
+      description: Retrieve a list of all fee sponsors
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: paginationToken
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of fee sponsors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FeeSponsor'
+                  nextPageToken:
+                    type: string
+    post:
+      tags:
+        - Fee Sponsors
+      summary: Create fee sponsor
+      description: Create a new fee sponsor
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                network:
+                  type: string
+              required:
+                - name
+                - network
+      responses:
+        '201':
+          description: Fee sponsor created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeeSponsor'
+  /fee-sponsors/{sponsorId}:
+    get:
+      tags:
+        - Fee Sponsors
+      summary: Get fee sponsor
+      description: Retrieve a specific fee sponsor by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sponsorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Fee sponsor details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeeSponsor'
+        '404':
+          description: Fee sponsor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /networks:
+    get:
+      tags:
+        - Networks
+      summary: List networks
+      description: Retrieve a list of all supported networks
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of networks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Network'
+  /networks/{networkId}:
+    get:
+      tags:
+        - Networks
+      summary: Get network
+      description: Retrieve a specific network by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: networkId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Network details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Network'
+        '404':
+          description: Network not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /policies:
+    get:
+      tags:
+        - Policy Engine
+      summary: List policies
+      description: Retrieve a list of all policies
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: paginationToken
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of policies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Policy'
+                  nextPageToken:
+                    type: string
+    post:
+      tags:
+        - Policy Engine
+      summary: Create policy
+      description: Create a new policy
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                rules:
+                  type: array
+                  items:
+                    type: object
+              required:
+                - name
+                - rules
+      responses:
+        '201':
+          description: Policy created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+  /policies/{policyId}:
+    get:
+      tags:
+        - Policy Engine
+      summary: Get policy
+      description: Retrieve a specific policy by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Policy details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+        '404':
+          description: Policy not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Policy Engine
+      summary: Update policy
+      description: Update policy rules
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                rules:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        '200':
+          description: Policy updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+    delete:
+      tags:
+        - Policy Engine
+      summary: Delete policy
+      description: Delete a policy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Policy deleted successfully
+  /permissions:
+    get:
+      tags:
+        - Permissions
+      summary: List permissions
+      description: Retrieve a list of all permissions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: paginationToken
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of permissions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Permission'
+                  nextPageToken:
+                    type: string
+    post:
+      tags:
+        - Permissions
+      summary: Create permission
+      description: Create a new permission
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                operations:
+                  type: array
+                  items:
+                    type: string
+                predicates:
+                  type: array
+                  items:
+                    type: object
+              required:
+                - name
+                - operations
+      responses:
+        '201':
+          description: Permission created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+  /permissions/{permissionId}:
+    get:
+      tags:
+        - Permissions
+      summary: Get permission
+      description: Retrieve a specific permission by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: permissionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Permission details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+        '404':
+          description: Permission not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Permissions
+      summary: Update permission
+      description: Update permission operations and predicates
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: permissionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                operations:
+                  type: array
+                  items:
+                    type: string
+                predicates:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        '200':
+          description: Permission updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+    delete:
+      tags:
+        - Permissions
+      summary: Delete permission
+      description: Delete a permission
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: permissionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Permission deleted successfully
+  /webhooks:
+    get:
+      tags:
+        - Webhooks
+      summary: List webhooks
+      description: Retrieve a list of all webhooks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: paginationToken
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of webhooks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Webhook'
+                  nextPageToken:
+                    type: string
+    post:
+      tags:
+        - Webhooks
+      summary: Create webhook
+      description: Create a new webhook
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                url:
+                  type: string
+                  format: uri
+                events:
+                  type: array
+                  items:
+                    type: string
+                secret:
+                  type: string
+              required:
+                - name
+                - url
+                - events
+      responses:
+        '201':
+          description: Webhook created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+  /webhooks/{webhookId}:
+    get:
+      tags:
+        - Webhooks
+      summary: Get webhook
+      description: Retrieve a specific webhook by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Webhook details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+        '404':
+          description: Webhook not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Webhooks
+      summary: Update webhook
+      description: Update webhook configuration
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                url:
+                  type: string
+                  format: uri
+                events:
+                  type: array
+                  items:
+                    type: string
+                secret:
+                  type: string
+      responses:
+        '200':
+          description: Webhook updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+    delete:
+      tags:
+        - Webhooks
+      summary: Delete webhook
+      description: Delete a webhook
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Webhook deleted successfully
+  /webhooks/{webhookId}/test:
+    post:
+      tags:
+        - Webhooks
+      summary: Test webhook
+      description: Send a test event to the webhook
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Test webhook sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Test webhook sent successfully"
