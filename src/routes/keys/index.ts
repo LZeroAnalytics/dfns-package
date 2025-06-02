@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { BaseRoute } from '../base-route';
 import { validateRequest } from '@/middleware/validation';
-import { requireAuth, validateSignature } from '@/middleware/auth';
+import { requireAuth, extractCredentials } from '@/middleware/auth';
 import Joi from 'joi';
 
 export class KeyRoutes extends BaseRoute {
@@ -10,7 +10,7 @@ export class KeyRoutes extends BaseRoute {
 
     router.post('/',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         body: Joi.object({
           scheme: Joi.string().required(),
@@ -60,7 +60,7 @@ export class KeyRoutes extends BaseRoute {
 
     router.delete('/:id',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -71,7 +71,7 @@ export class KeyRoutes extends BaseRoute {
 
     router.post('/:id/delegate',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -85,7 +85,7 @@ export class KeyRoutes extends BaseRoute {
 
     router.post('/:id/signatures',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),

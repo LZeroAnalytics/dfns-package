@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { BaseRoute } from '../base-route';
 import { validateRequest } from '@/middleware/validation';
-import { requireAuth, validateSignature } from '@/middleware/auth';
+import { requireAuth, extractCredentials } from '@/middleware/auth';
 import Joi from 'joi';
 
 export class FeeSponsorRoutes extends BaseRoute {
@@ -10,7 +10,7 @@ export class FeeSponsorRoutes extends BaseRoute {
 
     router.post('/',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         body: Joi.object({
           name: Joi.string().required(),
@@ -43,7 +43,7 @@ export class FeeSponsorRoutes extends BaseRoute {
 
     router.post('/:id/activate',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -54,7 +54,7 @@ export class FeeSponsorRoutes extends BaseRoute {
 
     router.post('/:id/deactivate',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -65,7 +65,7 @@ export class FeeSponsorRoutes extends BaseRoute {
 
     router.delete('/:id',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),

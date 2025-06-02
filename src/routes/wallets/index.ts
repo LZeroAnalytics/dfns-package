@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { BaseRoute } from '../base-route';
 import { validateRequest } from '@/middleware/validation';
-import { requireAuth, validateSignature } from '@/middleware/auth';
+import { requireAuth, extractCredentials } from '@/middleware/auth';
 import Joi from 'joi';
 
 export class WalletRoutes extends BaseRoute {
@@ -10,7 +10,7 @@ export class WalletRoutes extends BaseRoute {
 
     router.post('/',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         body: Joi.object({
           network: Joi.string().required(),
@@ -59,7 +59,7 @@ export class WalletRoutes extends BaseRoute {
 
     router.delete('/:id',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -70,7 +70,7 @@ export class WalletRoutes extends BaseRoute {
 
     router.post('/:id/delegate',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -148,7 +148,7 @@ export class WalletRoutes extends BaseRoute {
 
     router.post('/:id/transfers',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -198,7 +198,7 @@ export class WalletRoutes extends BaseRoute {
 
     router.post('/:id/transactions',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
