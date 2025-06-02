@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { BaseRoute } from '../base-route';
 import { validateRequest } from '@/middleware/validation';
-import { requireAuth, validateSignature } from '@/middleware/auth';
+import { requireAuth, extractCredentials } from '@/middleware/auth';
 import Joi from 'joi';
 
 export class PermissionRoutes extends BaseRoute {
@@ -21,7 +21,7 @@ export class PermissionRoutes extends BaseRoute {
 
     router.post('/permissions',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         body: Joi.object({
           name: Joi.string().required(),
@@ -46,7 +46,7 @@ export class PermissionRoutes extends BaseRoute {
 
     router.put('/permissions/:id',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -64,7 +64,7 @@ export class PermissionRoutes extends BaseRoute {
 
     router.delete('/permissions/:id',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -87,7 +87,7 @@ export class PermissionRoutes extends BaseRoute {
 
     router.post('/user-permissions',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         body: Joi.object({
           userId: Joi.string().required(),
@@ -100,7 +100,7 @@ export class PermissionRoutes extends BaseRoute {
 
     router.delete('/user-permissions/:userId/:permissionId',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         params: Joi.object({
           userId: Joi.string().required(),
@@ -124,7 +124,7 @@ export class PermissionRoutes extends BaseRoute {
 
     router.post('/role-permissions',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         body: Joi.object({
           roleId: Joi.string().required(),
@@ -136,7 +136,7 @@ export class PermissionRoutes extends BaseRoute {
 
     router.delete('/role-permissions/:roleId/:permissionId',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         params: Joi.object({
           roleId: Joi.string().required(),

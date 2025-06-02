@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { BaseRoute } from '../base-route';
 import { validateRequest } from '@/middleware/validation';
-import { requireAuth, validateSignature } from '@/middleware/auth';
+import { requireAuth, extractCredentials } from '@/middleware/auth';
 import Joi from 'joi';
 
 export class PolicyEngineRoutes extends BaseRoute {
@@ -21,7 +21,7 @@ export class PolicyEngineRoutes extends BaseRoute {
 
     router.post('/policies',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         body: Joi.object({
           name: Joi.string().required(),
@@ -49,7 +49,7 @@ export class PolicyEngineRoutes extends BaseRoute {
 
     router.put('/policies/:id',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -71,7 +71,7 @@ export class PolicyEngineRoutes extends BaseRoute {
 
     router.delete('/policies/:id',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -104,7 +104,7 @@ export class PolicyEngineRoutes extends BaseRoute {
 
     router.post('/approval-requests/:id/approve',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -115,7 +115,7 @@ export class PolicyEngineRoutes extends BaseRoute {
 
     router.post('/approval-requests/:id/reject',
       requireAuth,
-      validateSignature,
+      extractCredentials,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),

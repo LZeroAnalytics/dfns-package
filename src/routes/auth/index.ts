@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { BaseRoute } from '../base-route';
 import { validateRequest } from '@/middleware/validation';
-import { requireAuth, validateSignature } from '@/middleware/auth';
+import { requireAuth, extractCredentials } from '@/middleware/auth';
 import Joi from 'joi';
 
 export class AuthRoutes extends BaseRoute {
@@ -40,7 +40,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.post('/action/init',
-      validateSignature,
+      extractCredentials,
       validateRequest({
         body: Joi.object({
           userActionPayload: Joi.string().required(),
@@ -53,7 +53,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.post('/action/sign',
-      validateSignature,
+      extractCredentials,
       validateRequest({
         body: Joi.object({
           challengeIdentifier: Joi.string().required(),
