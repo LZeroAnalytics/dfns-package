@@ -9,8 +9,8 @@ export class KeyRoutes extends BaseRoute {
     const router = Router();
 
     router.post('/',
-      requireAuth,
       extractCredentials,
+      requireAuth,
       validateRequest({
         body: Joi.object({
           scheme: Joi.string().required(),
@@ -24,6 +24,7 @@ export class KeyRoutes extends BaseRoute {
     );
 
     router.get('/',
+      extractCredentials,
       requireAuth,
       validateRequest({
         query: Joi.object({
@@ -35,6 +36,7 @@ export class KeyRoutes extends BaseRoute {
     );
 
     router.get('/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -45,6 +47,7 @@ export class KeyRoutes extends BaseRoute {
     );
 
     router.put('/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -59,8 +62,8 @@ export class KeyRoutes extends BaseRoute {
     );
 
     router.delete('/:id',
-      requireAuth,
       extractCredentials,
+      requireAuth,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -70,8 +73,8 @@ export class KeyRoutes extends BaseRoute {
     );
 
     router.post('/:id/delegate',
-      requireAuth,
       extractCredentials,
+      requireAuth,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -84,8 +87,8 @@ export class KeyRoutes extends BaseRoute {
     );
 
     router.post('/:id/signatures',
-      requireAuth,
       extractCredentials,
+      requireAuth,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -103,6 +106,7 @@ export class KeyRoutes extends BaseRoute {
     );
 
     router.get('/:id/signatures',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -117,6 +121,7 @@ export class KeyRoutes extends BaseRoute {
     );
 
     router.get('/:id/signatures/:sigId',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({

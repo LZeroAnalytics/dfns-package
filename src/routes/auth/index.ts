@@ -8,7 +8,8 @@ export class AuthRoutes extends BaseRoute {
   getRouter(): Router {
     const router = Router();
 
-    router.post('/delegated/registration', 
+    router.post('/delegated/registration',
+      extractCredentials,
       validateRequest({
         body: Joi.object({
           username: Joi.string().required(),
@@ -20,6 +21,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.post('/delegated/registration/restart',
+      extractCredentials,
       validateRequest({
         body: Joi.object({
           username: Joi.string().required(),
@@ -30,6 +32,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.post('/delegated/login',
+      extractCredentials,
       validateRequest({
         body: Joi.object({
           username: Joi.string().required(),
@@ -120,11 +123,13 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.get('/service-accounts',
+      extractCredentials,
       requireAuth,
       this.forwardRequest('GET', '/auth/service-accounts')
     );
 
     router.post('/service-accounts',
+      extractCredentials,
       requireAuth,
       validateRequest({
         body: Joi.object({
@@ -137,6 +142,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.get('/service-accounts/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -147,6 +153,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.put('/service-accounts/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -161,6 +168,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.post('/service-accounts/:id/activate',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -171,6 +179,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.post('/service-accounts/:id/deactivate',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -181,6 +190,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.delete('/service-accounts/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -191,11 +201,13 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.get('/users',
+      extractCredentials,
       requireAuth,
       this.forwardRequest('GET', '/auth/users')
     );
 
     router.post('/users',
+      extractCredentials,
       requireAuth,
       validateRequest({
         body: Joi.object({
@@ -207,6 +219,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.get('/users/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -217,6 +230,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.put('/users/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -231,6 +245,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.post('/users/:id/activate',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -241,6 +256,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.post('/users/:id/deactivate',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -251,6 +267,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.delete('/users/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -261,11 +278,13 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.get('/applications',
+      extractCredentials,
       requireAuth,
       this.forwardRequest('GET', '/auth/applications')
     );
 
     router.post('/applications',
+      extractCredentials,
       requireAuth,
       validateRequest({
         body: Joi.object({
@@ -280,6 +299,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.get('/applications/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -290,6 +310,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.put('/applications/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -307,6 +328,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.post('/applications/:id/activate',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -317,6 +339,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.post('/applications/:id/deactivate',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -327,6 +350,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.delete('/applications/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -337,11 +361,13 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.get('/personal-access-tokens',
+      extractCredentials,
       requireAuth,
       this.forwardRequest('GET', '/auth/personal-access-tokens')
     );
 
     router.post('/personal-access-tokens',
+      extractCredentials,
       requireAuth,
       validateRequest({
         body: Joi.object({
@@ -353,6 +379,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.get('/personal-access-tokens/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -363,6 +390,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.put('/personal-access-tokens/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -377,6 +405,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.delete('/personal-access-tokens/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -387,11 +416,13 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.get('/credentials',
+      extractCredentials,
       requireAuth,
       this.forwardRequest('GET', '/auth/credentials')
     );
 
     router.post('/credentials',
+      extractCredentials,
       requireAuth,
       validateRequest({
         body: Joi.object({
@@ -404,6 +435,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.get('/credentials/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -414,6 +446,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.put('/credentials/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -427,6 +460,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.post('/credentials/:id/activate',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -437,6 +471,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.post('/credentials/:id/deactivate',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -447,6 +482,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.delete('/credentials/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -457,11 +493,13 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.get('/recovery',
+      extractCredentials,
       requireAuth,
       this.forwardRequest('GET', '/auth/recovery')
     );
 
     router.post('/recovery',
+      extractCredentials,
       requireAuth,
       validateRequest({
         body: Joi.object({
@@ -473,6 +511,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.get('/recovery/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -483,6 +522,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.post('/recovery/:id/approve',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -493,6 +533,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.post('/recovery/:id/reject',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({

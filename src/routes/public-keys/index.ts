@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { BaseRoute } from '../base-route';
 import { validateRequest } from '@/middleware/validation';
-import { requireAuth } from '@/middleware/auth';
+import { extractCredentials, requireAuth } from '@/middleware/auth';
 import Joi from 'joi';
 
 export class PublicKeysRoutes extends BaseRoute {
@@ -9,6 +9,7 @@ export class PublicKeysRoutes extends BaseRoute {
     const router = Router();
 
     router.post('/',
+      extractCredentials,
       requireAuth,
       validateRequest({
         body: Joi.object({
@@ -20,11 +21,13 @@ export class PublicKeysRoutes extends BaseRoute {
     );
 
     router.get('/',
+      extractCredentials,
       requireAuth,
       this.forwardRequest('GET', '/public-keys')
     );
 
     router.get('/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -35,6 +38,7 @@ export class PublicKeysRoutes extends BaseRoute {
     );
 
     router.post('/:id/signatures',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -49,6 +53,7 @@ export class PublicKeysRoutes extends BaseRoute {
     );
 
     router.get('/:id/signatures/:signatureId',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -60,6 +65,7 @@ export class PublicKeysRoutes extends BaseRoute {
     );
 
     router.post('/:id/transactions',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -77,6 +83,7 @@ export class PublicKeysRoutes extends BaseRoute {
     );
 
     router.get('/:id/transactions/:transactionId',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -88,6 +95,7 @@ export class PublicKeysRoutes extends BaseRoute {
     );
 
     router.get('/:id/addresses/:network',
+
       requireAuth,
       validateRequest({
         params: Joi.object({

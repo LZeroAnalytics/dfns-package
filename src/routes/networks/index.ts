@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { BaseRoute } from '../base-route';
 import { validateRequest } from '@/middleware/validation';
-import { requireAuth } from '@/middleware/auth';
+import { extractCredentials, requireAuth } from '@/middleware/auth';
 import Joi from 'joi';
 
 export class NetworkRoutes extends BaseRoute {
@@ -9,6 +9,7 @@ export class NetworkRoutes extends BaseRoute {
     const router = Router();
 
     router.post('/estimate-fees',
+      extractCredentials,
       requireAuth,
       validateRequest({
         body: Joi.object({
@@ -21,6 +22,7 @@ export class NetworkRoutes extends BaseRoute {
     );
 
     router.post('/read-contract',
+      extractCredentials,
       requireAuth,
       validateRequest({
         body: Joi.object({
@@ -34,6 +36,7 @@ export class NetworkRoutes extends BaseRoute {
     );
 
     router.get('/:network/fee-estimates',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -50,6 +53,7 @@ export class NetworkRoutes extends BaseRoute {
     );
 
     router.post('/:network/read-contract',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -66,6 +70,7 @@ export class NetworkRoutes extends BaseRoute {
     );
 
     router.get('/:network/validators',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({

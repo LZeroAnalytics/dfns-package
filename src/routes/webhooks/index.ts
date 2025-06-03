@@ -9,8 +9,8 @@ export class WebhookRoutes extends BaseRoute {
     const router = Router();
 
     router.post('/',
-      requireAuth,
       extractCredentials,
+      requireAuth,
       validateRequest({
         body: Joi.object({
           name: Joi.string().required(),
@@ -23,6 +23,7 @@ export class WebhookRoutes extends BaseRoute {
     );
 
     router.get('/',
+      extractCredentials,
       requireAuth,
       validateRequest({
         query: Joi.object({
@@ -34,6 +35,7 @@ export class WebhookRoutes extends BaseRoute {
     );
 
     router.get('/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -44,8 +46,8 @@ export class WebhookRoutes extends BaseRoute {
     );
 
     router.put('/:id',
-      requireAuth,
       extractCredentials,
+      requireAuth,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -62,8 +64,8 @@ export class WebhookRoutes extends BaseRoute {
     );
 
     router.delete('/:id',
-      requireAuth,
       extractCredentials,
+      requireAuth,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -73,6 +75,7 @@ export class WebhookRoutes extends BaseRoute {
     );
 
     router.post('/:id/test',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({

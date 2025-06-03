@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { BaseRoute } from '../base-route';
 import { validateRequest } from '@/middleware/validation';
-import { requireAuth } from '@/middleware/auth';
+import { extractCredentials, requireAuth } from '@/middleware/auth';
 import Joi from 'joi';
 
 export class PolicyExecutionRoutes extends BaseRoute {
@@ -9,11 +9,13 @@ export class PolicyExecutionRoutes extends BaseRoute {
     const router = Router();
 
     router.get('/',
+      extractCredentials,
       requireAuth,
       this.forwardRequest('GET', '/policy-executions')
     );
 
     router.get('/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -24,6 +26,7 @@ export class PolicyExecutionRoutes extends BaseRoute {
     );
 
     router.put('/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({

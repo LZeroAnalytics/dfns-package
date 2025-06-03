@@ -9,6 +9,7 @@ export class PolicyEngineRoutes extends BaseRoute {
     const router = Router();
 
     router.get('/policies',
+      extractCredentials,
       requireAuth,
       validateRequest({
         query: Joi.object({
@@ -20,8 +21,8 @@ export class PolicyEngineRoutes extends BaseRoute {
     );
 
     router.post('/policies',
-      requireAuth,
       extractCredentials,
+      requireAuth,
       validateRequest({
         body: Joi.object({
           name: Joi.string().required(),
@@ -38,6 +39,7 @@ export class PolicyEngineRoutes extends BaseRoute {
     );
 
     router.get('/policies/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -48,8 +50,8 @@ export class PolicyEngineRoutes extends BaseRoute {
     );
 
     router.put('/policies/:id',
-      requireAuth,
       extractCredentials,
+      requireAuth,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -70,8 +72,8 @@ export class PolicyEngineRoutes extends BaseRoute {
     );
 
     router.delete('/policies/:id',
-      requireAuth,
       extractCredentials,
+      requireAuth,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -81,6 +83,7 @@ export class PolicyEngineRoutes extends BaseRoute {
     );
 
     router.get('/approval-requests',
+      extractCredentials,
       requireAuth,
       validateRequest({
         query: Joi.object({
@@ -93,6 +96,7 @@ export class PolicyEngineRoutes extends BaseRoute {
     );
 
     router.get('/approval-requests/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -103,8 +107,8 @@ export class PolicyEngineRoutes extends BaseRoute {
     );
 
     router.post('/approval-requests/:id/approve',
-      requireAuth,
       extractCredentials,
+      requireAuth,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -114,8 +118,8 @@ export class PolicyEngineRoutes extends BaseRoute {
     );
 
     router.post('/approval-requests/:id/reject',
-      requireAuth,
       extractCredentials,
+      requireAuth,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
