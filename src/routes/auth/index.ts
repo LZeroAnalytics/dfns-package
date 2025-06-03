@@ -8,6 +8,45 @@ export class AuthRoutes extends BaseRoute {
   getRouter(): Router {
     const router = Router();
 
+
+    // Registration
+    router.post('/registration/init',
+      extractCredentials,
+      validateRequest({
+        body: Joi.object({
+          username: Joi.string().required(),
+          registrationCode: Joi.string().required(),
+          orgId: Joi.string().required(),
+        }),
+      }),
+      this.forwardRequest('POST', '/auth/registration/init'),
+    );
+
+    router.post('/registration',
+      extractCredentials,
+      validateRequest({
+        body: Joi.object({
+          firstFactorCredential: Joi.any().required(),
+          secondFactorCredential: Joi.any().optional(),
+          recoveryCredential: Joi.any().optional(),
+        }),
+      }),
+      this.forwardRequest('POST', '/auth/registration'),
+    );
+
+    router.post('/registration/enduser',
+      extractCredentials,
+      validateRequest({
+        body: Joi.object({
+          firstFactorCredential: Joi.any().required(),
+          secondFactorCredential: Joi.any().optional(),
+          recoveryCredential: Joi.any().optional(),
+          wallets: Joi.any().optional(),
+        }),
+      }),
+      this.forwardRequest('POST', '/auth/registration/enduser'),
+    );
+
     router.post('/delegated/registration',
       extractCredentials,
       validateRequest({
