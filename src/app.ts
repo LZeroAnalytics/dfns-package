@@ -64,6 +64,9 @@ export class DfnsApiServer {
           webhooks: '/api/v1/webhooks',
           policyEngine: '/api/v1/policy-engine',
           permissions: '/api/v1/permissions',
+          assets: '/api/v1/assets',
+          policyExecutions: '/api/v1/policy-executions',
+          publicKeys: '/api/v1/public-keys',
         },
       });
     });
