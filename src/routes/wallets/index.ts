@@ -23,6 +23,7 @@ export class WalletRoutes extends BaseRoute {
     );
 
     router.get('/',
+      extractCredentials,
       requireAuth,
       validateRequest({
         query: Joi.object({

@@ -30,7 +30,6 @@ export class DfnsClient {
       baseURL: credentials.baseUrl || config.dfns.apiUrl,
       timeout: 30000,
       headers: {
-        'Content-Type': 'application/json',
         'User-Agent': 'dfns-package/1.0.0',
       },
     });
@@ -78,14 +77,14 @@ export class DfnsClient {
       const { status, data } = error.response;
       const message = data?.message || data?.error || 'API request failed';
       const code = data?.code || 'API_ERROR';
-      
+
       if (status === 401) {
         return new AuthenticationError(message, data);
       }
-      
+
       return new DfnsApiError(message, status, code, data);
     }
-    
+
     return new DfnsApiError('Network error or timeout', 500, 'NETWORK_ERROR', error.message);
   }
 
@@ -111,7 +110,7 @@ export class DfnsClient {
       const nonce = CryptoService.generateNonce();
       const canonicalRequest = CryptoService.createCanonicalRequest(method, path, timestamp, body);
       const signature = CryptoService.signRequest(canonicalRequest, this.privateKey);
-      
+
       headers['X-DFNS-NONCE'] = nonce;
       headers['X-DFNS-SIGNINGKEY'] = this.signingKeyId;
       headers['X-DFNS-SIGNATURE'] = signature;
@@ -124,11 +123,17 @@ export class DfnsClient {
     method: string,
     path: string,
     body?: any,
-    additionalHeaders?: Record<string, string>
+    additionalHeaders: Record<string, string> = {},
   ): Promise<DfnsResponse<T>> {
     try {
-      const headers = this.createSignedHeaders(method, path, body, additionalHeaders);
-      
+      // Clone the forwarded headers
+      const headers: Record<string, string> = { ...additionalHeaders };
+
+      // Only add Content‑Type when we actually send a body
+      if (body !== undefined && body !== null) {
+        headers['Content-Type'] = 'application/json';
+      }
+
       const requestConfig: AxiosRequestConfig = {
         method: method.toLowerCase() as any,
         url: path,

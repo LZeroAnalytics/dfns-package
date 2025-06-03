@@ -7,6 +7,20 @@ import { AuthenticatedRequest } from '@/middleware/auth';
 export abstract class BaseRoute {
   protected hooks: CustomLogicHooks;
 
+  private static readonly FORWARD_WHITELIST = new Set([
+    'accept',
+    'content-type',
+    'authorization',
+    'x-dfns-appid',
+    'x-dfns-nonce',
+    'x-dfns-signature',
+    'x-dfns-signingkey',
+    'x-dfns-useraction',
+    'x-dfns-appsecret',
+    'x-dfns-apisignature',
+  ]);
+
+
   constructor(hooks: CustomLogicHooks = {}) {
     this.hooks = hooks;
   }
@@ -56,12 +70,17 @@ export abstract class BaseRoute {
         const headers: Record<string, string> = {};
         
         Object.entries(req.headers).forEach(([key, value]) => {
-          if (typeof value === 'string') {
-            headers[key] = value;
+          const k = key.toLowerCase();
+          if (typeof value === 'string' && BaseRoute.FORWARD_WHITELIST.has(k)) {
+            headers[k] = value;
           }
         });
-        
-        return dfnsClient.request(method, path, req.body, headers);
+
+        const bodyToSend =
+          ['post', 'put', 'patch', 'delete'].includes(method.toLowerCase()) ? req.body : undefined;
+
+        const { data } = await dfnsClient.request(method, path, bodyToSend, headers);
+        return data;
       });
     };
   }
