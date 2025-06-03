@@ -8,7 +8,7 @@ export class PermissionRoutes extends BaseRoute {
   getRouter(): Router {
     const router = Router();
 
-    router.get('/permissions',
+    router.get('/',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -20,22 +20,19 @@ export class PermissionRoutes extends BaseRoute {
       this.forwardRequest('GET', '/permissions')
     );
 
-    router.post('/permissions',
+    router.post('/',
       extractCredentials,
       requireAuth,
       validateRequest({
         body: Joi.object({
           name: Joi.string().required(),
-          description: Joi.string().optional(),
-          resource: Joi.string().required(),
-          actions: Joi.array().items(Joi.string()).required(),
-          conditions: Joi.any().optional(),
+          operations: Joi.array().items(Joi.string()).required(),
         })
       }),
       this.forwardRequest('POST', '/permissions')
     );
 
-    router.get('/permissions/:id',
+    router.get('/:id',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -46,7 +43,7 @@ export class PermissionRoutes extends BaseRoute {
       this.forwardRequest('GET', '/permissions/:id')
     );
 
-    router.put('/permissions/:id',
+    router.put('/:id',
       extractCredentials,
       requireAuth,
       extractCredentials,
@@ -56,101 +53,62 @@ export class PermissionRoutes extends BaseRoute {
         }),
         body: Joi.object({
           name: Joi.string().optional(),
-          description: Joi.string().optional(),
-          resource: Joi.string().optional(),
-          actions: Joi.array().items(Joi.string()).optional(),
-          conditions: Joi.any().optional(),
+          operations: Joi.array().items(Joi.string()).optional(),
         })
       }),
       this.forwardRequest('PUT', '/permissions/:id')
     );
 
-    router.delete('/permissions/:id',
+    router.put('/:id/archive',
+      extractCredentials,
+      requireAuth,
+      validateRequest({
+        params: Joi.object({
+          id: Joi.string().required(),
+        }),
+        body: Joi.object({
+          isArchived: Joi.boolean().required(),
+        })
+      }),
+      this.forwardRequest('PUT', '/permissions/:id/archive')
+    );
+
+    router.post('/:id/assignments',
+      extractCredentials,
+      requireAuth,
+      validateRequest({
+        params: Joi.object({
+          id: Joi.string().required(),
+        }),
+        body: Joi.object({
+          identityId: Joi.string().required(),
+        })
+      }),
+      this.forwardRequest('PUT', '/permissions/:id/assignments')
+    );
+
+    router.delete('/:id/assignments/:assignmentId',
       extractCredentials,
       requireAuth,
       extractCredentials,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
+          assignmentId: Joi.string().required(),
         })
       }),
-      this.forwardRequest('DELETE', '/permissions/:id')
+      this.forwardRequest('DELETE', '/permissions/:id/assignments/:assignmentId')
     );
 
-    router.get('/user-permissions',
-      extractCredentials,
-      requireAuth,
-      validateRequest({
-        query: Joi.object({
-          userId: Joi.string().optional(),
-          limit: Joi.number().integer().min(1).max(100).default(20),
-          paginationToken: Joi.string().optional(),
-        })
-      }),
-      this.forwardRequest('GET', '/user-permissions')
-    );
-
-    router.post('/user-permissions',
-      extractCredentials,
-      requireAuth,
-      extractCredentials,
-      validateRequest({
-        body: Joi.object({
-          userId: Joi.string().required(),
-          permissionId: Joi.string().required(),
-          expiresAt: Joi.string().optional(),
-        })
-      }),
-      this.forwardRequest('POST', '/user-permissions')
-    );
-
-    router.delete('/user-permissions/:userId/:permissionId',
+    router.get('/:id/assignments',
       extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
-          userId: Joi.string().required(),
-          permissionId: Joi.string().required(),
+          id: Joi.string().required(),
         })
       }),
-      this.forwardRequest('DELETE', '/user-permissions/:userId/:permissionId')
-    );
-
-    router.get('/role-permissions',
-      extractCredentials,
-      requireAuth,
-      validateRequest({
-        query: Joi.object({
-          roleId: Joi.string().optional(),
-          limit: Joi.number().integer().min(1).max(100).default(20),
-          paginationToken: Joi.string().optional(),
-        })
-      }),
-      this.forwardRequest('GET', '/role-permissions')
-    );
-
-    router.post('/role-permissions',
-      extractCredentials,
-      requireAuth,
-      validateRequest({
-        body: Joi.object({
-          roleId: Joi.string().required(),
-          permissionId: Joi.string().required(),
-        })
-      }),
-      this.forwardRequest('POST', '/role-permissions')
-    );
-
-    router.delete('/role-permissions/:roleId/:permissionId',
-      extractCredentials,
-      requireAuth,
-      validateRequest({
-        params: Joi.object({
-          roleId: Joi.string().required(),
-          permissionId: Joi.string().required(),
-        })
-      }),
-      this.forwardRequest('DELETE', '/role-permissions/:roleId/:permissionId')
+      this.forwardRequest('GET', '/permissions/:id/assignments')
     );
 
     return router;
