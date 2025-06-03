@@ -89,6 +89,11 @@ export class AuthRoutes extends BaseRoute {
       this.forwardRequest('PUT', '/auth/logout')
     );
 
+    router.post('/action',
+      extractCredentials,
+      this.forwardRequest('POST', '/auth/action')
+    );
+
     router.post('/action/init',
       extractCredentials,
       validateRequest({

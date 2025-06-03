@@ -9,8 +9,8 @@ export class WalletRoutes extends BaseRoute {
     const router = Router();
 
     router.post('/',
-      requireAuth,
       extractCredentials,
+      requireAuth,
       validateRequest({
         body: Joi.object({
           network: Joi.string().required(),
@@ -35,6 +35,7 @@ export class WalletRoutes extends BaseRoute {
     );
 
     router.get('/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -45,6 +46,7 @@ export class WalletRoutes extends BaseRoute {
     );
 
     router.put('/:id',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -59,8 +61,8 @@ export class WalletRoutes extends BaseRoute {
     );
 
     router.delete('/:id',
-      requireAuth,
       extractCredentials,
+      requireAuth,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -70,8 +72,8 @@ export class WalletRoutes extends BaseRoute {
     );
 
     router.post('/:id/delegate',
-      requireAuth,
       extractCredentials,
+      requireAuth,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -84,6 +86,7 @@ export class WalletRoutes extends BaseRoute {
     );
 
     router.get('/:id/assets',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -94,6 +97,7 @@ export class WalletRoutes extends BaseRoute {
     );
 
     router.get('/:id/nfts',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -108,6 +112,7 @@ export class WalletRoutes extends BaseRoute {
     );
 
     router.get('/:id/history',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -122,6 +127,7 @@ export class WalletRoutes extends BaseRoute {
     );
 
     router.post('/:id/tag',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -135,6 +141,7 @@ export class WalletRoutes extends BaseRoute {
     );
 
     router.delete('/:id/untag',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -148,8 +155,8 @@ export class WalletRoutes extends BaseRoute {
     );
 
     router.post('/:id/transfers',
-      requireAuth,
       extractCredentials,
+      requireAuth,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -173,6 +180,7 @@ export class WalletRoutes extends BaseRoute {
     );
 
     router.get('/:id/transfers',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -187,6 +195,7 @@ export class WalletRoutes extends BaseRoute {
     );
 
     router.get('/:id/transfers/:transferId',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -198,8 +207,8 @@ export class WalletRoutes extends BaseRoute {
     );
 
     router.post('/:id/transactions',
-      requireAuth,
       extractCredentials,
+      requireAuth,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
@@ -214,6 +223,7 @@ export class WalletRoutes extends BaseRoute {
     );
 
     router.get('/:id/transactions',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
@@ -228,6 +238,7 @@ export class WalletRoutes extends BaseRoute {
     );
 
     router.get('/:id/transactions/:txId',
+      extractCredentials,
       requireAuth,
       validateRequest({
         params: Joi.object({
