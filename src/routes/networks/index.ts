@@ -8,6 +8,31 @@ export class NetworkRoutes extends BaseRoute {
   getRouter(): Router {
     const router = Router();
 
+    router.post('/estimate-fees',
+      requireAuth,
+      validateRequest({
+        body: Joi.object({
+          network: Joi.string().required(),
+          operation: Joi.string().required(),
+          operationPayload: Joi.object().optional(),
+        })
+      }),
+      this.forwardRequest('POST', '/networks/estimate-fees')
+    );
+
+    router.post('/read-contract',
+      requireAuth,
+      validateRequest({
+        body: Joi.object({
+          network: Joi.string().required(),
+          contractAddress: Joi.string().required(),
+          functionName: Joi.string().required(),
+          functionArgs: Joi.array().optional(),
+        })
+      }),
+      this.forwardRequest('POST', '/networks/read-contract')
+    );
+
     router.get('/:network/fee-estimates',
       requireAuth,
       validateRequest({

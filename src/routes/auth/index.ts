@@ -39,6 +39,51 @@ export class AuthRoutes extends BaseRoute {
       this.forwardRequest('POST', '/auth/delegated/login')
     );
 
+    router.post('/login/init',
+      validateRequest({
+        body: Joi.object({
+          username: Joi.string().required(),
+          orgId: Joi.string().required(),
+        })
+      }),
+      this.forwardRequest('POST', '/auth/login/init')
+    );
+
+    router.post('/login/code',
+      validateRequest({
+        body: Joi.object({
+          username: Joi.string().required(),
+          orgId: Joi.string().required(),
+        })
+      }),
+      this.forwardRequest('POST', '/auth/login/code')
+    );
+
+    router.post('/login',
+      validateRequest({
+        body: Joi.object({
+          challengeIdentifier: Joi.string().required(),
+          firstFactor: Joi.any().optional(),
+          secondFactor: Joi.any().optional(),
+        })
+      }),
+      this.forwardRequest('POST', '/auth/login')
+    );
+
+    router.post('/login/social',
+      validateRequest({
+        body: Joi.object({
+          idToken: Joi.string().required(),
+          socialLoginProviderKind: Joi.string().required(),
+        })
+      }),
+      this.forwardRequest('POST', '/auth/login/social')
+    );
+
+    router.put('/logout',
+      this.forwardRequest('PUT', '/auth/logout')
+    );
+
     router.post('/action/init',
       extractCredentials,
       validateRequest({
