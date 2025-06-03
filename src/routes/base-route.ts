@@ -79,7 +79,16 @@ export abstract class BaseRoute {
         const bodyToSend =
           ['post', 'put', 'patch', 'delete'].includes(method.toLowerCase()) ? req.body : undefined;
 
-        const { data } = await dfnsClient.request(method, path, bodyToSend, headers);
+        // Resolve any ":param" placeholders in the path template
+        const resolvedPath = path.replace(/:([A-Za-z0-9_]+)/g, (_match, key) => {
+          const value = req.params[key];
+          if (value === undefined) {
+            throw new Error(`Missing required path parameter "${key}"`);
+          }
+          return encodeURIComponent(value);
+        });
+
+        const { data } = await dfnsClient.request(method, resolvedPath, bodyToSend, headers);
         return data;
       });
     };
