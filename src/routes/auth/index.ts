@@ -40,6 +40,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.post('/login/init',
+      extractCredentials,
       validateRequest({
         body: Joi.object({
           username: Joi.string().required(),
@@ -50,6 +51,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.post('/login/code',
+      extractCredentials,
       validateRequest({
         body: Joi.object({
           username: Joi.string().required(),
@@ -60,6 +62,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.post('/login',
+      extractCredentials,
       validateRequest({
         body: Joi.object({
           challengeIdentifier: Joi.string().required(),
@@ -71,6 +74,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.post('/login/social',
+      extractCredentials,
       validateRequest({
         body: Joi.object({
           idToken: Joi.string().required(),
@@ -81,6 +85,7 @@ export class AuthRoutes extends BaseRoute {
     );
 
     router.put('/logout',
+      extractCredentials,
       this.forwardRequest('PUT', '/auth/logout')
     );
 
