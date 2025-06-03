@@ -46,7 +46,7 @@ export class DfnsApiServer {
 
   private setupRoutes(): void {
     const apiRoutes = new ApiRoutes(this.hooks);
-    this.app.use('/api/v1', apiRoutes.getRouter());
+    this.app.use('/', apiRoutes.getRouter());
 
     this.app.get('/', (req, res) => {
       res.json({
@@ -55,18 +55,18 @@ export class DfnsApiServer {
         description: 'Express.js TypeScript API that mirrors DFNS API behavior',
         documentation: 'https://docs.dfns.co/d/api-docs/api-docs',
         endpoints: {
-          health: '/api/v1/health',
-          auth: '/api/v1/auth',
-          wallets: '/api/v1/wallets',
-          keys: '/api/v1/keys',
-          feeSponsors: '/api/v1/fee-sponsors',
-          networks: '/api/v1/networks',
-          webhooks: '/api/v1/webhooks',
-          policyEngine: '/api/v1/policy-engine',
-          permissions: '/api/v1/permissions',
-          assets: '/api/v1/assets',
-          policyExecutions: '/api/v1/policy-executions',
-          publicKeys: '/api/v1/public-keys',
+          health: '/health',
+          auth: '/auth',
+          wallets: '/wallets',
+          keys: '/keys',
+          feeSponsors: '/fee-sponsors',
+          networks: '/networks',
+          webhooks: '/webhooks',
+          policyEngine: '/policy-engine',
+          permissions: '/permissions',
+          assets: '/assets',
+          policyExecutions: '/policy-executions',
+          publicKeys: '/public-keys',
         },
       });
     });
