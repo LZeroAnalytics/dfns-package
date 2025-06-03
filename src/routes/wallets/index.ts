@@ -162,7 +162,7 @@ export class WalletRoutes extends BaseRoute {
           id: Joi.string().required(),
         }),
         body: Joi.object({
-          kind: Joi.string().valid('Transaction', 'Evm', 'Eip1559', 'EvmLegacy').required(),
+          kind: Joi.string().valid('Native', 'Asa', 'Aip21', 'Erc20', 'Erc721', 'Sep41', 'Spl', 'Spl2022', 'Tep74', 'Trc10', 'Trc20', 'Trc721').required(),
           to: Joi.string().required(),
           amount: Joi.string().optional(),
           contractAddress: Joi.string().optional(),
