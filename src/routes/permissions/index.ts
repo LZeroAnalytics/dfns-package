@@ -13,7 +13,7 @@ export class PermissionRoutes extends BaseRoute {
       requireAuth,
       validateRequest({
         query: Joi.object({
-          limit: Joi.number().integer().min(1).max(100).default(20),
+          limit: Joi.number().integer().min(1).default(100),
           paginationToken: Joi.string().optional(),
         })
       }),
