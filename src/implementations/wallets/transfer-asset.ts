@@ -1,10 +1,10 @@
-import { Request, Response } from 'express';
-import { createMulticallService } from '../../utils/multicall';
+import { Response } from 'express';
+import { AuthenticatedRequest } from '../../middleware/auth';
+import { DfnsApiHelper } from '../../utils/dfns-api';
 import { networks } from '../../config';
-import { v4 as uuidv4 } from 'uuid';
 import { TransferAssetBody, TransferAssetResponse } from '../../types/wallets';
 
-export async function transferAsset(req: Request, res: Response): Promise<void> {
+export async function transferAsset(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const { walletId } = req.params;
     const networkKey = req.query.network as string || 'ethereum';
@@ -18,10 +18,10 @@ export async function transferAsset(req: Request, res: Response): Promise<void> 
       return;
     }
 
-    if (!walletId || !/^0x[a-fA-F0-9]{40}$/.test(walletId)) {
+    if (!walletId) {
       res.status(400).json({
-        error: 'Invalid wallet address',
-        message: 'Wallet ID must be a valid Ethereum address',
+        error: 'Invalid wallet ID',
+        message: 'Wallet ID is required',
       });
       return;
     }
@@ -43,52 +43,31 @@ export async function transferAsset(req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const multicallService = createMulticallService(networkKey);
-    const provider = multicallService.getProvider();
-
-    let estimatedGas: bigint;
-    let gasPrice: bigint;
-
-    try {
-      [estimatedGas, gasPrice] = await Promise.all([
-        estimateGasForTransfer(provider, walletId, transferRequest),
-        provider.getFeeData().then(feeData => feeData.gasPrice || 0n),
-      ]);
-    } catch (error) {
-      console.error('Gas estimation failed:', error);
-      res.status(400).json({
-        error: 'Gas estimation failed',
-        message: 'Unable to estimate gas for this transaction',
+    if (!req.dfnsCredentials) {
+      res.status(401).json({
+        error: 'Unauthorized',
+        message: 'DFNS credentials are required',
       });
       return;
     }
 
-    const transferId = uuidv4();
-    const now = new Date().toISOString();
-    const estimatedFee = (estimatedGas * gasPrice).toString();
+    try {
+      const response = await DfnsApiHelper.callDfnsApi(
+        req.dfnsCredentials,
+        'POST',
+        `/wallets/${walletId}/transfers`,
+        transferRequest
+      );
 
-    const response: TransferAssetResponse = {
-      id: transferId,
-      walletId,
-      network: 'Ethereum' as any,
-      requester: {
-        userId: 'user-id',
-        tokenId: 'token-id',
-        appId: 'app-id',
-      },
-      requestBody: transferRequest,
-      metadata: {
-        asset: {
-          symbol: networks[networkKey].nativeSymbol,
-          decimals: 18,
-        }
-      },
-      status: 'Pending',
-      fee: estimatedFee,
-      dateRequested: now,
-    };
-
-    res.status(201).json(response);
+      res.status(201).json(response.data);
+    } catch (error) {
+      console.error('Error creating transfer via DFNS API:', error);
+      res.status(500).json({
+        error: 'Transfer creation failed',
+        message: 'Unable to create transfer request via DFNS API',
+      });
+      return;
+    }
   } catch (error) {
     console.error('Error creating transfer request:', error);
     res.status(500).json({
@@ -139,38 +118,4 @@ function validateTransferRequest(request: TransferAssetBody): string | null {
   }
 
   return null;
-}
-
-async function estimateGasForTransfer(
-  provider: any,
-  from: string,
-  request: TransferAssetBody
-): Promise<bigint> {
-  try {
-    const transaction: any = {
-      from,
-      to: request.to,
-      value: request.kind === 'Native' ? request.amount || '0' : '0',
-      data: '0x',
-    };
-
-    if (request.kind === 'Erc20' && 'contract' in request && 'amount' in request) {
-      const erc20Interface = new (await import('ethers')).Interface([
-        'function transfer(address to, uint256 amount) returns (bool)',
-      ]);
-      
-      transaction.to = request.contract;
-      transaction.data = erc20Interface.encodeFunctionData('transfer', [
-        request.to,
-        request.amount,
-      ]);
-      transaction.value = '0';
-    }
-
-    const gasEstimate = await provider.estimateGas(transaction);
-    return gasEstimate;
-  } catch (error) {
-    console.warn('Gas estimation failed, using default:', error);
-    return 21000n; // Default gas limit for simple transfers
-  }
 }
