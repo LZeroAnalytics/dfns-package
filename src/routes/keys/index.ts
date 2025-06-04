@@ -143,7 +143,7 @@ export class KeyRoutes extends BaseRoute {
       this.forwardRequest('GET', '/keys/:id/signatures/:sigId')
     );
 
-    router.get('/import',
+    router.post('/import',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -158,7 +158,7 @@ export class KeyRoutes extends BaseRoute {
       this.forwardRequest('POST', '/keys/import')
     );
 
-    router.get('/:id/export',
+    router.post('/:id/export',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -173,7 +173,7 @@ export class KeyRoutes extends BaseRoute {
       this.forwardRequest('POST', '/keys/:id/export')
     );
 
-    router.get('/:id/derive',
+    router.post('/:id/derive',
       extractCredentials,
       requireAuth,
       validateRequest({
