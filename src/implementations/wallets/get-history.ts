@@ -1,4 +1,6 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { AuthenticatedRequest } from '../../middleware/auth';
+import { getWalletAddress } from '../../utils/wallet-address';
 import { createMulticallService } from '../../utils/multicall';
 import { networks } from '../../config';
 import { rpc } from '../../utils/rpc';
@@ -25,7 +27,7 @@ interface TransactionHistory {
   };
 }
 
-export async function getWalletHistory(req: Request, res: Response): Promise<void> {
+export async function getWalletHistory(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const { walletId } = req.params;
     const networkKey = req.query.network as string || 'ethereum';
@@ -40,10 +42,10 @@ export async function getWalletHistory(req: Request, res: Response): Promise<voi
       return;
     }
 
-    if (!walletId || !/^0x[a-fA-F0-9]{40}$/.test(walletId)) {
+    if (!walletId) {
       res.status(400).json({
-        error: 'Invalid wallet address',
-        message: 'Wallet ID must be a valid Ethereum address',
+        error: 'Invalid wallet ID',
+        message: 'Wallet ID is required',
       });
       return;
     }
@@ -52,6 +54,34 @@ export async function getWalletHistory(req: Request, res: Response): Promise<voi
       res.status(400).json({
         error: 'Invalid limit',
         message: 'Limit cannot exceed 100',
+      });
+      return;
+    }
+
+    if (!req.dfnsCredentials) {
+      res.status(401).json({
+        error: 'Unauthorized',
+        message: 'DFNS credentials are required',
+      });
+      return;
+    }
+
+    let walletAddress;
+    try {
+      walletAddress = await getWalletAddress(req.dfnsCredentials, walletId);
+    } catch (error) {
+      console.error('Error fetching wallet address from DFNS:', error);
+      res.status(404).json({
+        error: 'Wallet not found',
+        message: 'Unable to fetch wallet details from DFNS API',
+      });
+      return;
+    }
+
+    if (!walletAddress || !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+      res.status(400).json({
+        error: 'Invalid wallet address',
+        message: 'Wallet does not have a valid Ethereum address',
       });
       return;
     }
@@ -76,8 +106,8 @@ export async function getWalletHistory(req: Request, res: Response): Promise<voi
     const toBlock = Math.min(fromBlock + 10000, latestBlock);
 
     const [incomingTxs, outgoingTxs] = await Promise.all([
-      getTransactionsByAddress(provider, walletId, fromBlock, toBlock, 'to'),
-      getTransactionsByAddress(provider, walletId, fromBlock, toBlock, 'from'),
+      getTransactionsByAddress(provider, walletAddress, fromBlock, toBlock, 'to'),
+      getTransactionsByAddress(provider, walletAddress, fromBlock, toBlock, 'from'),
     ]);
 
     const allTransactions = [...incomingTxs, ...outgoingTxs]

@@ -1,8 +1,10 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { AuthenticatedRequest } from '../../middleware/auth';
 import { networks } from '../../config';
 import { ListTransfersResponse } from '../../types/wallets';
+import { DfnsApiHelper } from '../../utils/dfns-api';
 
-export async function listTransferRequests(req: Request, res: Response): Promise<void> {
+export async function listTransferRequests(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const { walletId } = req.params;
     const networkKey = req.query.network as string || 'ethereum';
@@ -17,10 +19,10 @@ export async function listTransferRequests(req: Request, res: Response): Promise
       return;
     }
 
-    if (!walletId || !/^0x[a-fA-F0-9]{40}$/.test(walletId)) {
+    if (!walletId) {
       res.status(400).json({
-        error: 'Invalid wallet address',
-        message: 'Wallet ID must be a valid Ethereum address',
+        error: 'Invalid wallet ID',
+        message: 'Wallet ID is required',
       });
       return;
     }
@@ -33,27 +35,39 @@ export async function listTransferRequests(req: Request, res: Response): Promise
       return;
     }
 
-    let offset = 0;
-    if (paginationToken) {
-      try {
-        offset = parseInt(paginationToken);
-      } catch (error) {
-        res.status(400).json({
-          error: 'Invalid pagination token',
-          message: 'Pagination token must be a valid number',
-        });
-        return;
-      }
+    if (!req.dfnsCredentials) {
+      res.status(401).json({
+        error: 'Unauthorized',
+        message: 'DFNS credentials are required',
+      });
+      return;
     }
 
-    const mockTransfers = generateMockTransfers(walletId, networkKey, offset, limit);
-    const hasMore = mockTransfers.length === limit;
-    const nextPageToken = hasMore ? (offset + limit).toString() : undefined;
+    let transfersData;
+    try {
+      const queryParams = new URLSearchParams({
+        limit: limit.toString(),
+        ...(paginationToken && { paginationToken }),
+      });
+
+      transfersData = await DfnsApiHelper.callDfnsApi(
+        req.dfnsCredentials,
+        'GET',
+        `/wallets/${walletId}/transfers?${queryParams.toString()}`
+      );
+    } catch (error) {
+      console.error('Error fetching transfers from DFNS:', error);
+      res.status(500).json({
+        error: 'Failed to fetch transfers',
+        message: 'Unable to retrieve transfer requests from DFNS API',
+      });
+      return;
+    }
 
     const response: ListTransfersResponse = {
       walletId,
-      items: mockTransfers,
-      nextPageToken,
+      items: transfersData.data.items || [],
+      nextPageToken: transfersData.data.nextPageToken,
     };
 
     res.json(response);
@@ -64,80 +78,4 @@ export async function listTransferRequests(req: Request, res: Response): Promise
       message: 'Failed to list transfer requests',
     });
   }
-}
-
-function generateMockTransfers(
-  walletId: string,
-  networkKey: string,
-  offset: number,
-  limit: number
-): ListTransfersResponse['items'] {
-  const transfers: ListTransfersResponse['items'] = [];
-  const network = networks[networkKey];
-  
-  const mockData = [
-    {
-      kind: 'Native',
-      to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-      amount: '1000000000000000000',
-      status: 'Confirmed' as const,
-      txHash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-      fee: '21000000000000000',
-    },
-    {
-      kind: 'Erc20',
-      to: '0x8ba1f109551bD432803012645Hac136c30C6756',
-      amount: '1000000',
-      contractAddress: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-      status: 'Pending' as const,
-      fee: '65000000000000000',
-    },
-    {
-      kind: 'Erc721',
-      to: '0x9ca2f109551bD432803012645Hac136c30C6756',
-      tokenId: '123',
-      contractAddress: '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D',
-      status: 'Failed' as const,
-      fee: '85000000000000000',
-    },
-  ];
-
-  for (let i = 0; i < limit && (offset + i) < 50; i++) {
-    const mockIndex = (offset + i) % mockData.length;
-    const mock = mockData[mockIndex];
-    const transferId = `transfer-${walletId.slice(-8)}-${offset + i + 1}`;
-    const now = new Date(Date.now() - (offset + i) * 3600000).toISOString();
-
-    transfers.push({
-      id: transferId,
-      walletId,
-      network: 'Ethereum' as any,
-      requester: {
-        userId: 'user-123',
-        tokenId: 'token-456',
-        appId: 'app-789',
-      },
-      requestBody: {
-        kind: mock.kind as any,
-        to: mock.to,
-        amount: mock.amount || '0',
-        contract: mock.contractAddress,
-        tokenId: mock.tokenId,
-        priority: 'Standard' as any,
-        memo: `Transfer ${i + 1}`,
-      } as any,
-      metadata: {
-        asset: {
-          symbol: networks[networkKey].nativeSymbol,
-          decimals: 18,
-        }
-      },
-      status: mock.status,
-      txHash: mock.txHash,
-      fee: mock.fee,
-      dateRequested: now,
-    });
-  }
-
-  return transfers;
 }
