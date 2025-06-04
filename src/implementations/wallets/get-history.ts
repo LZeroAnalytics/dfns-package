@@ -4,6 +4,7 @@ import { getWalletAddress } from '../../utils/wallet-address';
 import { createMulticallService } from '../../utils/multicall';
 import { networks } from '../../config';
 import { rpc } from '../../utils/rpc';
+import { extractForwardHeaders } from '../../utils/dfns-api';
 
 interface TransactionHistory {
   id: string;
@@ -29,7 +30,7 @@ interface TransactionHistory {
 
 export async function getWalletHistory(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const { walletId } = req.params;
+    const { id: walletId } = req.params;
     const networkKey = req.query.network as string || 'ethereum';
     const limit = parseInt(req.query.limit as string) || 50;
     const paginationToken = req.query.paginationToken as string;
@@ -66,9 +67,11 @@ export async function getWalletHistory(req: AuthenticatedRequest, res: Response)
       return;
     }
 
+    const forwardHeaders = extractForwardHeaders(req);
+    
     let walletAddress;
     try {
-      walletAddress = await getWalletAddress(req.dfnsCredentials, walletId);
+      walletAddress = await getWalletAddress(req.dfnsCredentials, walletId, forwardHeaders);
     } catch (error) {
       console.error('Error fetching wallet address from DFNS:', error);
       res.status(404).json({

@@ -1,12 +1,12 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../../middleware/auth';
-import { DfnsApiHelper } from '../../utils/dfns-api';
+import { DfnsApiHelper, extractForwardHeaders } from '../../utils/dfns-api';
 import { networks } from '../../config';
 import { GetTransferResponse } from '../../types/wallets';
 
 export async function getTransferRequestById(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const { walletId, transferId } = req.params;
+    const { id: walletId, transferId } = req.params;
     const networkKey = req.query.network as string || 'ethereum';
 
     if (!networks[networkKey]) {
@@ -41,11 +41,15 @@ export async function getTransferRequestById(req: AuthenticatedRequest, res: Res
       return;
     }
 
+    const forwardHeaders = extractForwardHeaders(req);
+    
     try {
       const response = await DfnsApiHelper.callDfnsApi(
         req.dfnsCredentials,
         'GET',
-        `/wallets/${walletId}/transfers/${transferId}`
+        `/wallets/${walletId}/transfers/${transferId}`,
+        undefined,
+        forwardHeaders
       );
 
       res.json(response.data);

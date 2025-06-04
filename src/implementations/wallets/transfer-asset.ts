@@ -1,12 +1,12 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../../middleware/auth';
-import { DfnsApiHelper } from '../../utils/dfns-api';
+import { DfnsApiHelper, extractForwardHeaders } from '../../utils/dfns-api';
 import { networks } from '../../config';
 import { TransferAssetBody, TransferAssetResponse } from '../../types/wallets';
 
 export async function transferAsset(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const { walletId } = req.params;
+    const { id: walletId } = req.params;
     const networkKey = req.query.network as string || 'ethereum';
     const transferRequest: TransferAssetBody = req.body;
 
@@ -51,12 +51,15 @@ export async function transferAsset(req: AuthenticatedRequest, res: Response): P
       return;
     }
 
+    const forwardHeaders = extractForwardHeaders(req);
+    
     try {
       const response = await DfnsApiHelper.callDfnsApi(
         req.dfnsCredentials,
         'POST',
         `/wallets/${walletId}/transfers`,
-        transferRequest
+        transferRequest,
+        forwardHeaders
       );
 
       res.status(201).json(response.data);
