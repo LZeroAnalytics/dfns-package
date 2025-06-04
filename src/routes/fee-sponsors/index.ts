@@ -13,8 +13,7 @@ export class FeeSponsorRoutes extends BaseRoute {
       extractCredentials,
       validateRequest({
         body: Joi.object({
-          name: Joi.string().required(),
-          network: Joi.string().required(),
+          walletId: Joi.string().required(),
         })
       }),
       this.forwardRequest('POST', '/fee-sponsors')
@@ -24,7 +23,7 @@ export class FeeSponsorRoutes extends BaseRoute {
       requireAuth,
       validateRequest({
         query: Joi.object({
-          limit: Joi.number().integer().min(1).max(100).default(20),
+          limit: Joi.number().integer().min(1).default(100),
           paginationToken: Joi.string().optional(),
         })
       }),
@@ -41,7 +40,7 @@ export class FeeSponsorRoutes extends BaseRoute {
       this.forwardRequest('GET', '/fee-sponsors/:id')
     );
 
-    router.post('/:id/activate',
+    router.put('/:id/activate',
       requireAuth,
       extractCredentials,
       validateRequest({
@@ -49,10 +48,10 @@ export class FeeSponsorRoutes extends BaseRoute {
           id: Joi.string().required(),
         })
       }),
-      this.forwardRequest('POST', '/fee-sponsors/:id/activate')
+      this.forwardRequest('PUT', '/fee-sponsors/:id/activate')
     );
 
-    router.post('/:id/deactivate',
+    router.put('/:id/deactivate',
       requireAuth,
       extractCredentials,
       validateRequest({
@@ -60,7 +59,7 @@ export class FeeSponsorRoutes extends BaseRoute {
           id: Joi.string().required(),
         })
       }),
-      this.forwardRequest('POST', '/fee-sponsors/:id/deactivate')
+      this.forwardRequest('PUT', '/fee-sponsors/:id/deactivate')
     );
 
     router.delete('/:id',
@@ -74,18 +73,18 @@ export class FeeSponsorRoutes extends BaseRoute {
       this.forwardRequest('DELETE', '/fee-sponsors/:id')
     );
 
-    router.get('/:id/sponsored-fees',
+    router.get('/:id/fees',
       requireAuth,
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
         }),
         query: Joi.object({
-          limit: Joi.number().integer().min(1).max(100).default(20),
+          limit: Joi.number().integer().min(1).default(100),
           paginationToken: Joi.string().optional(),
         })
       }),
-      this.forwardRequest('GET', '/fee-sponsors/:id/sponsored-fees')
+      this.forwardRequest('GET', '/fee-sponsors/:id/fees')
     );
 
     return router;
