@@ -7,9 +7,6 @@ import { NetworkRoutes } from './networks';
 import { WebhookRoutes } from './webhooks';
 import { PolicyEngineRoutes } from './policy-engine';
 import { PermissionRoutes } from './permissions';
-import { AssetsRoutes } from './assets';
-import { PolicyExecutionRoutes } from './policy-execution';
-import { PublicKeysRoutes } from './public-keys';
 import { CustomLogicHooks } from '@/types/common';
 import { PolicyApprovalRoutes } from '@/routes/policy-approvals';
 
@@ -33,9 +30,6 @@ export class ApiRoutes {
     const policyEngineRoutes = new PolicyEngineRoutes(this.hooks);
     const policyApprovalRoutes = new PolicyApprovalRoutes(this.hooks);
     const permissionRoutes = new PermissionRoutes(this.hooks);
-    const assetsRoutes = new AssetsRoutes();
-    const policyExecutionRoutes = new PolicyExecutionRoutes();
-    const publicKeysRoutes = new PublicKeysRoutes();
 
     this.router.use('/auth', authRoutes.getRouter());
     this.router.use('/wallets', walletRoutes.getRouter());
@@ -46,9 +40,6 @@ export class ApiRoutes {
     this.router.use('/v2/policies', policyEngineRoutes.getRouter());
     this.router.use('/v2/policy-approvals', policyApprovalRoutes.getRouter());
     this.router.use('/permissions', permissionRoutes.getRouter());
-    this.router.use('/assets', assetsRoutes.getRouter());
-    this.router.use('/policy-executions', policyExecutionRoutes.getRouter());
-    this.router.use('/public-keys', publicKeysRoutes.getRouter());
 
     this.router.get('/health', (req, res) => {
       res.json({
