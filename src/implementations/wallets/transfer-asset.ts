@@ -2,42 +2,13 @@ import { Request, Response } from 'express';
 import { createMulticallService } from '../../utils/multicall';
 import { networks } from '../../config';
 import { v4 as uuidv4 } from 'uuid';
-
-interface TransferRequest {
-  kind: 'Native' | 'Erc20' | 'Erc721' | 'Erc1155';
-  to: string;
-  amount?: string;
-  contractAddress?: string;
-  tokenId?: string;
-  data?: string;
-  gasLimit?: string;
-  priority?: 'Slow' | 'Standard' | 'Fast';
-  memo?: string;
-  externalId?: string;
-}
-
-interface TransferResponse {
-  id: string;
-  walletId: string;
-  network: string;
-  requester: {
-    userId: string;
-    tokenId: string;
-    appId: string;
-  };
-  requestBody: TransferRequest;
-  status: 'Pending' | 'Executing' | 'Broadcasted' | 'Confirmed' | 'Failed';
-  txHash?: string;
-  fee?: string;
-  dateCreated: string;
-  dateUpdated: string;
-}
+import { TransferAssetBody, TransferAssetResponse } from '../../types/wallets';
 
 export async function transferAsset(req: Request, res: Response): Promise<void> {
   try {
     const { walletId } = req.params;
     const networkKey = req.query.network as string || 'ethereum';
-    const transferRequest: TransferRequest = req.body;
+    const transferRequest: TransferAssetBody = req.body;
 
     if (!networks[networkKey]) {
       res.status(400).json({
@@ -96,23 +67,25 @@ export async function transferAsset(req: Request, res: Response): Promise<void> 
     const now = new Date().toISOString();
     const estimatedFee = (estimatedGas * gasPrice).toString();
 
-    const response: TransferResponse = {
+    const response: TransferAssetResponse = {
       id: transferId,
       walletId,
-      network: networks[networkKey].name,
+      network: 'Ethereum' as any,
       requester: {
         userId: 'user-id',
         tokenId: 'token-id',
         appId: 'app-id',
       },
-      requestBody: {
-        ...transferRequest,
-        gasLimit: transferRequest.gasLimit || estimatedGas.toString(),
+      requestBody: transferRequest,
+      metadata: {
+        asset: {
+          symbol: networks[networkKey].nativeSymbol,
+          decimals: 18,
+        }
       },
       status: 'Pending',
       fee: estimatedFee,
-      dateCreated: now,
-      dateUpdated: now,
+      dateRequested: now,
     };
 
     res.status(201).json(response);
@@ -125,63 +98,43 @@ export async function transferAsset(req: Request, res: Response): Promise<void> 
   }
 }
 
-function validateTransferRequest(request: TransferRequest): string | null {
-  const { kind, amount, contractAddress, tokenId } = request;
-
-  switch (kind) {
+function validateTransferRequest(request: TransferAssetBody): string | null {
+  switch (request.kind) {
     case 'Native':
-      if (!amount) {
+      if (!request.amount) {
         return 'Amount is required for native transfers';
-      }
-      if (contractAddress) {
-        return 'Contract address should not be provided for native transfers';
       }
       break;
 
     case 'Erc20':
-      if (!amount) {
+      if (!request.amount) {
         return 'Amount is required for ERC20 transfers';
       }
-      if (!contractAddress) {
+      if (!request.contract) {
         return 'Contract address is required for ERC20 transfers';
       }
-      if (!/^0x[a-fA-F0-9]{40}$/.test(contractAddress)) {
+      if (!/^0x[a-fA-F0-9]{40}$/.test(request.contract)) {
         return 'Invalid contract address format';
       }
       break;
 
     case 'Erc721':
-      if (!tokenId) {
+      if (!request.tokenId) {
         return 'Token ID is required for ERC721 transfers';
       }
-      if (!contractAddress) {
+      if (!request.contract) {
         return 'Contract address is required for ERC721 transfers';
       }
-      if (!/^0x[a-fA-F0-9]{40}$/.test(contractAddress)) {
-        return 'Invalid contract address format';
-      }
-      break;
-
-    case 'Erc1155':
-      if (!tokenId) {
-        return 'Token ID is required for ERC1155 transfers';
-      }
-      if (!amount) {
-        return 'Amount is required for ERC1155 transfers';
-      }
-      if (!contractAddress) {
-        return 'Contract address is required for ERC1155 transfers';
-      }
-      if (!/^0x[a-fA-F0-9]{40}$/.test(contractAddress)) {
+      if (!/^0x[a-fA-F0-9]{40}$/.test(request.contract)) {
         return 'Invalid contract address format';
       }
       break;
 
     default:
-      return `Unsupported transfer kind: ${kind}`;
+      return `Unsupported transfer kind: ${request.kind}`;
   }
 
-  if (amount && !/^\d+$/.test(amount)) {
+  if ('amount' in request && request.amount && !/^\d+$/.test(request.amount)) {
     return 'Amount must be a valid integer string';
   }
 
@@ -191,22 +144,22 @@ function validateTransferRequest(request: TransferRequest): string | null {
 async function estimateGasForTransfer(
   provider: any,
   from: string,
-  request: TransferRequest
+  request: TransferAssetBody
 ): Promise<bigint> {
   try {
     const transaction: any = {
       from,
       to: request.to,
       value: request.kind === 'Native' ? request.amount || '0' : '0',
-      data: request.data || '0x',
+      data: '0x',
     };
 
-    if (request.kind === 'Erc20' && request.contractAddress && request.amount) {
+    if (request.kind === 'Erc20' && 'contract' in request && 'amount' in request) {
       const erc20Interface = new (await import('ethers')).Interface([
         'function transfer(address to, uint256 amount) returns (bool)',
       ]);
       
-      transaction.to = request.contractAddress;
+      transaction.to = request.contract;
       transaction.data = erc20Interface.encodeFunctionData('transfer', [
         request.to,
         request.amount,

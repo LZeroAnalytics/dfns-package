@@ -1,39 +1,6 @@
 import { Request, Response } from 'express';
 import { networks } from '../../config';
-
-interface TransferRequestItem {
-  id: string;
-  walletId: string;
-  network: string;
-  requester: {
-    userId: string;
-    tokenId: string;
-    appId: string;
-  };
-  requestBody: {
-    kind: string;
-    to: string;
-    amount?: string;
-    contractAddress?: string;
-    tokenId?: string;
-    data?: string;
-    gasLimit?: string;
-    priority?: string;
-    memo?: string;
-    externalId?: string;
-  };
-  status: 'Pending' | 'Executing' | 'Broadcasted' | 'Confirmed' | 'Failed';
-  txHash?: string;
-  fee?: string;
-  dateCreated: string;
-  dateUpdated: string;
-}
-
-interface ListTransfersResponse {
-  items: TransferRequestItem[];
-  nextPageToken?: string;
-  hasMore: boolean;
-}
+import { ListTransfersResponse } from '../../types/wallets';
 
 export async function listTransferRequests(req: Request, res: Response): Promise<void> {
   try {
@@ -84,9 +51,9 @@ export async function listTransferRequests(req: Request, res: Response): Promise
     const nextPageToken = hasMore ? (offset + limit).toString() : undefined;
 
     const response: ListTransfersResponse = {
+      walletId,
       items: mockTransfers,
       nextPageToken,
-      hasMore,
     };
 
     res.json(response);
@@ -104,8 +71,8 @@ function generateMockTransfers(
   networkKey: string,
   offset: number,
   limit: number
-): TransferRequestItem[] {
-  const transfers: TransferRequestItem[] = [];
+): ListTransfersResponse['items'] {
+  const transfers: ListTransfersResponse['items'] = [];
   const network = networks[networkKey];
   
   const mockData = [
@@ -144,26 +111,31 @@ function generateMockTransfers(
     transfers.push({
       id: transferId,
       walletId,
-      network: network.name,
+      network: 'Ethereum' as any,
       requester: {
         userId: 'user-123',
         tokenId: 'token-456',
         appId: 'app-789',
       },
       requestBody: {
-        kind: mock.kind,
+        kind: mock.kind as any,
         to: mock.to,
-        amount: mock.amount,
-        contractAddress: mock.contractAddress,
+        amount: mock.amount || '0',
+        contract: mock.contractAddress,
         tokenId: mock.tokenId,
-        priority: 'Standard',
+        priority: 'Standard' as any,
         memo: `Transfer ${i + 1}`,
+      } as any,
+      metadata: {
+        asset: {
+          symbol: networks[networkKey].nativeSymbol,
+          decimals: 18,
+        }
       },
       status: mock.status,
       txHash: mock.txHash,
       fee: mock.fee,
-      dateCreated: now,
-      dateUpdated: now,
+      dateRequested: now,
     });
   }
 

@@ -2,43 +2,13 @@ import { Request, Response } from 'express';
 import { createMulticallService } from '../../utils/multicall';
 import { networks } from '../../config';
 import { Wallet, parseUnits } from 'ethers';
-
-interface BroadcastTransactionRequest {
-  kind: 'Transaction' | 'Evm' | 'Eip1559' | 'EvmLegacy';
-  to: string;
-  amount?: string;
-  contractAddress?: string;
-  tokenId?: string;
-  data?: string;
-  gasLimit?: string;
-  gasPrice?: string;
-  maxFeePerGas?: string;
-  maxPriorityFeePerGas?: string;
-  nonce?: number;
-}
-
-interface BroadcastTransactionResponse {
-  id: string;
-  walletId: string;
-  network: string;
-  requester: {
-    userId: string;
-    tokenId: string;
-    appId: string;
-  };
-  requestBody: BroadcastTransactionRequest;
-  status: 'Pending' | 'Executing' | 'Broadcasted' | 'Confirmed' | 'Failed';
-  txHash?: string;
-  fee?: string;
-  dateCreated: string;
-  dateUpdated: string;
-}
+import { BroadcastTransactionBody, BroadcastTransactionResponse } from '../../types/wallets';
 
 export async function broadcastTransaction(req: Request, res: Response): Promise<void> {
   try {
     const { walletId } = req.params;
     const networkKey = req.query.network as string || 'ethereum';
-    const transactionRequest: BroadcastTransactionRequest = req.body;
+    const transactionRequest: BroadcastTransactionBody = req.body;
 
     if (!networks[networkKey]) {
       res.status(400).json({
@@ -89,7 +59,7 @@ export async function broadcastTransaction(req: Request, res: Response): Promise
       const response: BroadcastTransactionResponse = {
         id: txResponse.hash,
         walletId,
-        network: networkConfig.name,
+        network: 'Ethereum' as any,
         requester: {
           userId: 'user-id',
           tokenId: 'token-id',
@@ -99,8 +69,7 @@ export async function broadcastTransaction(req: Request, res: Response): Promise
         status: 'Broadcasted',
         txHash: txResponse.hash,
         fee: (BigInt(transaction.gasLimit || 0) * BigInt(transaction.gasPrice || 0)).toString(),
-        dateCreated: now,
-        dateUpdated: now,
+        dateRequested: now,
       };
 
       res.status(201).json(response);
@@ -121,47 +90,41 @@ export async function broadcastTransaction(req: Request, res: Response): Promise
   }
 }
 
-function validateBroadcastRequest(request: BroadcastTransactionRequest): string | null {
-  const { kind, to, data } = request;
-
-  if (!['Transaction', 'Evm', 'Eip1559', 'EvmLegacy'].includes(kind)) {
-    return `Invalid transaction kind: ${kind}`;
+function validateBroadcastRequest(request: BroadcastTransactionBody): string | null {
+  if (!['Transaction', 'Evm', 'Eip1559', 'EvmLegacy', 'Psbt', 'Json'].includes(request.kind)) {
+    return `Invalid transaction kind: ${request.kind}`;
   }
 
-  if (!to || !/^0x[a-fA-F0-9]{40}$/.test(to)) {
-    return 'Invalid recipient address format';
-  }
+  if (request.kind === 'Evm' || request.kind === 'Eip1559' || request.kind === 'EvmLegacy') {
+    if (request.to && !/^0x[a-fA-F0-9]{40}$/.test(request.to)) {
+      return 'Invalid recipient address format';
+    }
 
-  if (data && !/^0x[a-fA-F0-9]*$/.test(data)) {
-    return 'Invalid transaction data format';
-  }
-
-  if (request.gasLimit && !/^\d+$/.test(request.gasLimit)) {
-    return 'Gas limit must be a valid integer string';
-  }
-
-  if (request.gasPrice && !/^\d+$/.test(request.gasPrice)) {
-    return 'Gas price must be a valid integer string';
-  }
-
-  if (request.amount && !/^\d+$/.test(request.amount)) {
-    return 'Amount must be a valid integer string';
+    if (request.data && !/^0x[a-fA-F0-9]*$/.test(request.data)) {
+      return 'Invalid transaction data format';
+    }
   }
 
   return null;
 }
 
 async function buildTransaction(
-  request: BroadcastTransactionRequest,
+  request: BroadcastTransactionBody,
   wallet: Wallet,
   provider: any
 ): Promise<any> {
-  const { kind, to, amount, data, gasLimit, gasPrice, maxFeePerGas, maxPriorityFeePerGas } = request;
+  if (request.kind === 'Transaction') {
+    throw new Error('Raw transaction broadcasting not supported in this implementation');
+  }
+
+  if (request.kind === 'Psbt' || request.kind === 'Json') {
+    throw new Error(`${request.kind} transactions not supported for EVM networks`);
+  }
 
   const transaction: any = {
-    to,
-    value: amount || '0',
-    data: data || '0x',
+    to: request.to || '0x0000000000000000000000000000000000000000',
+    value: request.value || '0',
+    data: request.data || '0x',
   };
 
   if (request.nonce !== undefined) {
@@ -170,25 +133,28 @@ async function buildTransaction(
     transaction.nonce = await wallet.getNonce();
   }
 
-  if (kind === 'Eip1559') {
-    if (maxFeePerGas) {
-      transaction.maxFeePerGas = maxFeePerGas;
+  if (request.kind === 'Eip1559') {
+    if (request.maxFeePerGas) {
+      transaction.maxFeePerGas = request.maxFeePerGas;
     }
-    if (maxPriorityFeePerGas) {
-      transaction.maxPriorityFeePerGas = maxPriorityFeePerGas;
+    if (request.maxPriorityFeePerGas) {
+      transaction.maxPriorityFeePerGas = request.maxPriorityFeePerGas;
     }
     transaction.type = 2;
-  } else {
-    if (gasPrice) {
-      transaction.gasPrice = gasPrice;
+  } else if (request.kind === 'EvmLegacy') {
+    if (request.gasPrice) {
+      transaction.gasPrice = request.gasPrice;
     } else {
       const feeData = await provider.getFeeData();
       transaction.gasPrice = feeData.gasPrice;
     }
+  } else {
+    const feeData = await provider.getFeeData();
+    transaction.gasPrice = feeData.gasPrice;
   }
 
-  if (gasLimit) {
-    transaction.gasLimit = gasLimit;
+  if (request.gasLimit) {
+    transaction.gasLimit = request.gasLimit;
   } else {
     try {
       transaction.gasLimit = await provider.estimateGas(transaction);
