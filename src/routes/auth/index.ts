@@ -47,35 +47,57 @@ export class AuthRoutes extends BaseRoute {
       this.forwardRequest('POST', '/auth/registration/enduser'),
     );
 
-    router.post('/delegated/registration',
+    router.post('/registration/delegated',
       extractCredentials,
       validateRequest({
         body: Joi.object({
-          username: Joi.string().required(),
-          orgId: Joi.string().required(),
+          email: Joi.string().required(),
+          kind: Joi.string().valid('EndUser', 'CustomerEmployee', 'DfnsStaff').required(),
           externalId: Joi.string().optional(),
         })
       }),
-      this.forwardRequest('POST', '/auth/delegated/registration')
+      this.forwardRequest('POST', '/auth/registration/delegated')
     );
 
-    router.post('/delegated/registration/restart',
+    router.post('registration/delegated/restart',
       extractCredentials,
       validateRequest({
         body: Joi.object({
-          username: Joi.string().required(),
-          orgId: Joi.string().required(),
+          email: Joi.string().required(),
+          kind: Joi.string().valid('EndUser', 'CustomerEmployee', 'DfnsStaff').required(),
+          externalId: Joi.string().optional(),
         })
       }),
       this.forwardRequest('POST', '/auth/delegated/registration/restart')
     );
 
-    router.post('/delegated/login',
+    router.put('/registration/code',
       extractCredentials,
       validateRequest({
         body: Joi.object({
           username: Joi.string().required(),
           orgId: Joi.string().required(),
+        }),
+      }),
+      this.forwardRequest('PUT', '/auth/registration/code'),
+    );
+
+    router.post('/registration/social',
+      extractCredentials,
+      validateRequest({
+        body: Joi.object({
+          idToken: Joi.string().required(),
+          socialLoginProviderKind: Joi.string().required(),
+        }),
+      }),
+      this.forwardRequest('POST', '/auth/registration/social'),
+    );
+
+    router.post('/login/delegated',
+      extractCredentials,
+      validateRequest({
+        body: Joi.object({
+          username: Joi.string().required(),
         })
       }),
       this.forwardRequest('POST', '/auth/delegated/login')
@@ -85,8 +107,9 @@ export class AuthRoutes extends BaseRoute {
       extractCredentials,
       validateRequest({
         body: Joi.object({
-          username: Joi.string().required(),
+          username: Joi.string().optional(),
           orgId: Joi.string().required(),
+          loginCode: Joi.string().optional(),
         })
       }),
       this.forwardRequest('POST', '/auth/login/init')
@@ -108,7 +131,7 @@ export class AuthRoutes extends BaseRoute {
       validateRequest({
         body: Joi.object({
           challengeIdentifier: Joi.string().required(),
-          firstFactor: Joi.any().optional(),
+          firstFactor: Joi.any().required(),
           secondFactor: Joi.any().optional(),
         })
       }),
@@ -133,6 +156,13 @@ export class AuthRoutes extends BaseRoute {
 
     router.post('/action',
       extractCredentials,
+      validateRequest({
+        body: Joi.object({
+          challengeIdentifier: Joi.string().required(),
+          firstFactor: Joi.any().required(),
+          secondFactor: Joi.any().optional(),
+        })
+      }),
       this.forwardRequest('POST', '/auth/action')
     );
 
@@ -174,7 +204,9 @@ export class AuthRoutes extends BaseRoute {
         body: Joi.object({
           name: Joi.string().required(),
           publicKey: Joi.string().required(),
-          permissions: Joi.array().items(Joi.string()).optional(),
+          daysValid: Joi.number().optional(),
+          permissionId: Joi.string().optional(),
+          externalId: Joi.string().optional(),
         })
       }),
       this.forwardRequest('POST', '/auth/service-accounts')
@@ -200,13 +232,13 @@ export class AuthRoutes extends BaseRoute {
         }),
         body: Joi.object({
           name: Joi.string().optional(),
-          permissions: Joi.array().items(Joi.string()).optional(),
+          externalId: Joi.string().optional(),
         })
       }),
       this.forwardRequest('PUT', '/auth/service-accounts/:id')
     );
 
-    router.post('/service-accounts/:id/activate',
+    router.put('/service-accounts/:id/activate',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -214,10 +246,10 @@ export class AuthRoutes extends BaseRoute {
           id: Joi.string().required(),
         })
       }),
-      this.forwardRequest('POST', '/auth/service-accounts/:id/activate')
+      this.forwardRequest('PUT', '/auth/service-accounts/:id/activate')
     );
 
-    router.post('/service-accounts/:id/deactivate',
+    router.put('/service-accounts/:id/deactivate',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -225,7 +257,7 @@ export class AuthRoutes extends BaseRoute {
           id: Joi.string().required(),
         })
       }),
-      this.forwardRequest('POST', '/auth/service-accounts/:id/deactivate')
+      this.forwardRequest('PUT', '/auth/service-accounts/:id/deactivate')
     );
 
     router.delete('/service-accounts/:id',
@@ -242,6 +274,12 @@ export class AuthRoutes extends BaseRoute {
     router.get('/users',
       extractCredentials,
       requireAuth,
+      validateRequest({
+        query: Joi.object({
+          limit: Joi.number().integer().min(1).default(20),
+          paginationToken: Joi.string().optional(),
+        })
+      }),
       this.forwardRequest('GET', '/auth/users')
     );
 
@@ -250,8 +288,9 @@ export class AuthRoutes extends BaseRoute {
       requireAuth,
       validateRequest({
         body: Joi.object({
-          username: Joi.string().required(),
           externalId: Joi.string().optional(),
+          email: Joi.string().required(),
+          kind: Joi.string().required(),
         })
       }),
       this.forwardRequest('POST', '/auth/users')
@@ -283,7 +322,7 @@ export class AuthRoutes extends BaseRoute {
       this.forwardRequest('PUT', '/auth/users/:id')
     );
 
-    router.post('/users/:id/activate',
+    router.put('/users/:id/activate',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -291,10 +330,10 @@ export class AuthRoutes extends BaseRoute {
           id: Joi.string().required(),
         })
       }),
-      this.forwardRequest('POST', '/auth/users/:id/activate')
+      this.forwardRequest('PUT', '/auth/users/:id/activate')
     );
 
-    router.post('/users/:id/deactivate',
+    router.put('/users/:id/deactivate',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -302,7 +341,7 @@ export class AuthRoutes extends BaseRoute {
           id: Joi.string().required(),
         })
       }),
-      this.forwardRequest('POST', '/auth/users/:id/deactivate')
+      this.forwardRequest('PUT', '/auth/users/:id/deactivate')
     );
 
     router.delete('/users/:id',
@@ -316,28 +355,31 @@ export class AuthRoutes extends BaseRoute {
       this.forwardRequest('DELETE', '/auth/users/:id')
     );
 
-    router.get('/applications',
+    router.get('/apps',
       extractCredentials,
       requireAuth,
-      this.forwardRequest('GET', '/auth/applications')
+      this.forwardRequest('GET', '/auth/apps')
     );
 
-    router.post('/applications',
+    router.post('/apps',
       extractCredentials,
       requireAuth,
       validateRequest({
         body: Joi.object({
           name: Joi.string().required(),
-          reliedParty: Joi.object({
-            name: Joi.string().required(),
-            origins: Joi.array().items(Joi.string()).required(),
-          }).required(),
+          relyingPartyId: Joi.string().required(),
+          origin: Joi.string().required(),
+          kind: Joi.string().required(),
+          permissionId: Joi.string().optional(),
+          externalId: Joi.string().optional(),
+          publicKey: Joi.string().optional(),
+          daysValid: Joi.number().optional(),
         })
       }),
-      this.forwardRequest('POST', '/auth/applications')
+      this.forwardRequest('POST', '/auth/apps')
     );
 
-    router.get('/applications/:id',
+    router.get('/apps/:id',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -345,10 +387,10 @@ export class AuthRoutes extends BaseRoute {
           id: Joi.string().required(),
         })
       }),
-      this.forwardRequest('GET', '/auth/applications/:id')
+      this.forwardRequest('GET', '/auth/apps/:id')
     );
 
-    router.put('/applications/:id',
+    router.put('/apps/:id',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -357,16 +399,13 @@ export class AuthRoutes extends BaseRoute {
         }),
         body: Joi.object({
           name: Joi.string().optional(),
-          reliedParty: Joi.object({
-            name: Joi.string().optional(),
-            origins: Joi.array().items(Joi.string()).optional(),
-          }).optional(),
+          externalId: Joi.string().optional(),
         })
       }),
-      this.forwardRequest('PUT', '/auth/applications/:id')
+      this.forwardRequest('PUT', '/auth/apps/:id')
     );
 
-    router.post('/applications/:id/activate',
+    router.put('/apps/:id/activate',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -374,10 +413,10 @@ export class AuthRoutes extends BaseRoute {
           id: Joi.string().required(),
         })
       }),
-      this.forwardRequest('POST', '/auth/applications/:id/activate')
+      this.forwardRequest('PUT', '/auth/apps/:id/activate')
     );
 
-    router.post('/applications/:id/deactivate',
+    router.post('/apps/:id/deactivate',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -385,10 +424,10 @@ export class AuthRoutes extends BaseRoute {
           id: Joi.string().required(),
         })
       }),
-      this.forwardRequest('POST', '/auth/applications/:id/deactivate')
+      this.forwardRequest('POST', '/auth/apps/:id/deactivate')
     );
 
-    router.delete('/applications/:id',
+    router.delete('/apps/:id',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -396,28 +435,32 @@ export class AuthRoutes extends BaseRoute {
           id: Joi.string().required(),
         })
       }),
-      this.forwardRequest('DELETE', '/auth/applications/:id')
+      this.forwardRequest('DELETE', '/auth/apps/:id')
     );
 
-    router.get('/personal-access-tokens',
+    router.get('/pats',
       extractCredentials,
       requireAuth,
-      this.forwardRequest('GET', '/auth/personal-access-tokens')
+      this.forwardRequest('GET', '/auth/pats')
     );
 
-    router.post('/personal-access-tokens',
+    router.post('/pats',
       extractCredentials,
       requireAuth,
       validateRequest({
         body: Joi.object({
           name: Joi.string().required(),
-          permissions: Joi.array().items(Joi.string()).required(),
+          publicKey: Joi.string().required(),
+          secondsValid: Joi.number().optional(),
+          daysValid: Joi.number().optional(),
+          permissionId: Joi.string().optional(),
+          externalId: Joi.string().optional(),
         })
       }),
-      this.forwardRequest('POST', '/auth/personal-access-tokens')
+      this.forwardRequest('POST', '/auth/pats')
     );
 
-    router.get('/personal-access-tokens/:id',
+    router.get('/pats/:id',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -425,10 +468,10 @@ export class AuthRoutes extends BaseRoute {
           id: Joi.string().required(),
         })
       }),
-      this.forwardRequest('GET', '/auth/personal-access-tokens/:id')
+      this.forwardRequest('GET', '/auth/pats/:id')
     );
 
-    router.put('/personal-access-tokens/:id',
+    router.put('/pats/:id',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -437,13 +480,13 @@ export class AuthRoutes extends BaseRoute {
         }),
         body: Joi.object({
           name: Joi.string().optional(),
-          permissions: Joi.array().items(Joi.string()).optional(),
+          externalId: Joi.string().optional()
         })
       }),
-      this.forwardRequest('PUT', '/auth/personal-access-tokens/:id')
+      this.forwardRequest('PUT', '/auth/pats/:id')
     );
 
-    router.delete('/personal-access-tokens/:id',
+    router.put('/pats/:id/activate',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -451,7 +494,115 @@ export class AuthRoutes extends BaseRoute {
           id: Joi.string().required(),
         })
       }),
-      this.forwardRequest('DELETE', '/auth/personal-access-tokens/:id')
+      this.forwardRequest('PUT', '/auth/pats/:id/activate')
+    );
+
+    router.put('/pats/:id/deactivate',
+      extractCredentials,
+      requireAuth,
+      validateRequest({
+        params: Joi.object({
+          id: Joi.string().required(),
+        })
+      }),
+      this.forwardRequest('PUT', '/auth/pats/:id/deactivate')
+    );
+
+    router.delete('/pats/:id',
+      extractCredentials,
+      requireAuth,
+      validateRequest({
+        params: Joi.object({
+          id: Joi.string().required(),
+        })
+      }),
+      this.forwardRequest('DELETE', '/auth/pats/:id')
+    );
+
+    router.post('/credentials/code',
+      extractCredentials,
+      requireAuth,
+      validateRequest({
+        body: Joi.object({
+          expiration: Joi.any().required(),
+        })
+      }),
+      this.forwardRequest('POST', '/auth/credentials/code')
+    );
+
+    router.post('/credentials/init',
+      extractCredentials,
+      requireAuth,
+      validateRequest({
+        body: Joi.object({
+          kind: Joi.string().required(),
+        })
+      }),
+      this.forwardRequest('POST', '/auth/credentials/init')
+    );
+
+    router.post('/credentials/code/init',
+      extractCredentials,
+      requireAuth,
+      validateRequest({
+        body: Joi.object({
+          code: Joi.string().required(),
+          credentialKind: Joi.string().required(),
+        })
+      }),
+      this.forwardRequest('POST', '/auth/credentials/code/init')
+    );
+
+    router.post('/credentials',
+      extractCredentials,
+      requireAuth,
+      validateRequest({
+        body: Joi.object({
+          challengeIdentifier: Joi.string().required(),
+          credentialName: Joi.string().required(),
+          credentialKind: Joi.string().required(),
+          credentialInfo: Joi.any().required(),
+          encryptedPrivateKey: Joi.string().optional(),
+        })
+      }),
+      this.forwardRequest('POST', '/auth/credentials')
+    );
+
+    router.post('/credentials/code/verify',
+      extractCredentials,
+      requireAuth,
+      validateRequest({
+        body: Joi.object({
+          challengeIdentifier: Joi.string().required(),
+          credentialName: Joi.string().required(),
+          credentialKind: Joi.string().required(),
+          credentialInfo: Joi.any().required(),
+          encryptedPrivateKey: Joi.string().optional(),
+        })
+      }),
+      this.forwardRequest('POST', '/auth/credentials/code/verify')
+    );
+
+    router.put('/credentials/deactivate',
+      extractCredentials,
+      requireAuth,
+      validateRequest({
+        body: Joi.object({
+          credentialUuid: Joi.string().required(),
+        })
+      }),
+      this.forwardRequest('PUT', '/auth/credentials/deactivate')
+    );
+
+    router.put('/credentials/activate',
+      extractCredentials,
+      requireAuth,
+      validateRequest({
+        body: Joi.object({
+          credentialUuid: Joi.string().required(),
+        })
+      }),
+      this.forwardRequest('PUT', '/auth/credentials/activate')
     );
 
     router.get('/credentials',
@@ -460,126 +611,52 @@ export class AuthRoutes extends BaseRoute {
       this.forwardRequest('GET', '/auth/credentials')
     );
 
-    router.post('/credentials',
+    router.put('/recover/user/code',
       extractCredentials,
-      requireAuth,
-      validateRequest({
-        body: Joi.object({
-          name: Joi.string().required(),
-          kind: Joi.string().required(),
-          publicKey: Joi.string().optional(),
-        })
-      }),
-      this.forwardRequest('POST', '/auth/credentials')
-    );
-
-    router.get('/credentials/:id',
-      extractCredentials,
-      requireAuth,
-      validateRequest({
-        params: Joi.object({
-          id: Joi.string().required(),
-        })
-      }),
-      this.forwardRequest('GET', '/auth/credentials/:id')
-    );
-
-    router.put('/credentials/:id',
-      extractCredentials,
-      requireAuth,
-      validateRequest({
-        params: Joi.object({
-          id: Joi.string().required(),
-        }),
-        body: Joi.object({
-          name: Joi.string().optional(),
-        })
-      }),
-      this.forwardRequest('PUT', '/auth/credentials/:id')
-    );
-
-    router.post('/credentials/:id/activate',
-      extractCredentials,
-      requireAuth,
-      validateRequest({
-        params: Joi.object({
-          id: Joi.string().required(),
-        })
-      }),
-      this.forwardRequest('POST', '/auth/credentials/:id/activate')
-    );
-
-    router.post('/credentials/:id/deactivate',
-      extractCredentials,
-      requireAuth,
-      validateRequest({
-        params: Joi.object({
-          id: Joi.string().required(),
-        })
-      }),
-      this.forwardRequest('POST', '/auth/credentials/:id/deactivate')
-    );
-
-    router.delete('/credentials/:id',
-      extractCredentials,
-      requireAuth,
-      validateRequest({
-        params: Joi.object({
-          id: Joi.string().required(),
-        })
-      }),
-      this.forwardRequest('DELETE', '/auth/credentials/:id')
-    );
-
-    router.get('/recovery',
-      extractCredentials,
-      requireAuth,
-      this.forwardRequest('GET', '/auth/recovery')
-    );
-
-    router.post('/recovery',
-      extractCredentials,
-      requireAuth,
       validateRequest({
         body: Joi.object({
           username: Joi.string().required(),
           orgId: Joi.string().required(),
         })
       }),
-      this.forwardRequest('POST', '/auth/recovery')
+      this.forwardRequest('PUT', '/auth/recovery')
     );
 
-    router.get('/recovery/:id',
+    router.post('/recover/user/init',
+      extractCredentials,
+      validateRequest({
+        body: Joi.object({
+          username: Joi.string().required(),
+          verificationCode: Joi.string().required(),
+          orgId: Joi.string().required(),
+          credentialId: Joi.string().required(),
+        })
+      }),
+      this.forwardRequest('POST', '/auth/recover/user/init')
+    );
+
+    router.post('/recover/user/delegated',
       extractCredentials,
       requireAuth,
       validateRequest({
-        params: Joi.object({
-          id: Joi.string().required(),
+        body: Joi.object({
+          username: Joi.string().required(),
+          credentialId: Joi.string().required(),
         })
       }),
-      this.forwardRequest('GET', '/auth/recovery/:id')
+      this.forwardRequest('POST', '/auth/recover/user/delegated')
     );
 
-    router.post('/recovery/:id/approve',
+    router.post('/recover/user',
       extractCredentials,
-      requireAuth,
       validateRequest({
-        params: Joi.object({
-          id: Joi.string().required(),
+        body: Joi.object({
+          recovery: Joi.any().required(),
+          newCredentials: Joi.any().required(),
+          recoveryCredential: Joi.any().optional(),
         })
       }),
-      this.forwardRequest('POST', '/auth/recovery/:id/approve')
-    );
-
-    router.post('/recovery/:id/reject',
-      extractCredentials,
-      requireAuth,
-      validateRequest({
-        params: Joi.object({
-          id: Joi.string().required(),
-        })
-      }),
-      this.forwardRequest('POST', '/auth/recovery/:id/reject')
+      this.forwardRequest('POST', '/auth/recover/user')
     );
 
     return router;
