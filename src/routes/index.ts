@@ -11,6 +11,7 @@ import { AssetsRoutes } from './assets';
 import { PolicyExecutionRoutes } from './policy-execution';
 import { PublicKeysRoutes } from './public-keys';
 import { CustomLogicHooks } from '@/types/common';
+import { PolicyApprovalRoutes } from '@/routes/policy-approvals';
 
 export class ApiRoutes {
   private router: Router;
@@ -30,6 +31,7 @@ export class ApiRoutes {
     const networkRoutes = new NetworkRoutes(this.hooks);
     const webhookRoutes = new WebhookRoutes(this.hooks);
     const policyEngineRoutes = new PolicyEngineRoutes(this.hooks);
+    const policyApprovalRoutes = new PolicyApprovalRoutes(this.hooks);
     const permissionRoutes = new PermissionRoutes(this.hooks);
     const assetsRoutes = new AssetsRoutes();
     const policyExecutionRoutes = new PolicyExecutionRoutes();
@@ -41,7 +43,8 @@ export class ApiRoutes {
     this.router.use('/fee-sponsors', feeSponsorRoutes.getRouter());
     this.router.use('/networks', networkRoutes.getRouter());
     this.router.use('/webhooks', webhookRoutes.getRouter());
-    this.router.use('/policy-engine', policyEngineRoutes.getRouter());
+    this.router.use('/v2/policies', policyEngineRoutes.getRouter());
+    this.router.use('/v2/policy-approvals', policyApprovalRoutes.getRouter());
     this.router.use('/permissions', permissionRoutes.getRouter());
     this.router.use('/assets', assetsRoutes.getRouter());
     this.router.use('/policy-executions', policyExecutionRoutes.getRouter());

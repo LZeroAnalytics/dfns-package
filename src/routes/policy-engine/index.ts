@@ -8,37 +8,35 @@ export class PolicyEngineRoutes extends BaseRoute {
   getRouter(): Router {
     const router = Router();
 
-    router.get('/policies',
+    router.get('/',
       extractCredentials,
       requireAuth,
       validateRequest({
         query: Joi.object({
-          limit: Joi.number().integer().min(1).max(100).default(20),
+          limit: Joi.number().integer().min(1).default(100),
           paginationToken: Joi.string().optional(),
+          status: Joi.string().optional(),
         })
       }),
-      this.forwardRequest('GET', '/policies')
+      this.forwardRequest('GET', '/v2/policies')
     );
 
-    router.post('/policies',
+    router.post('/',
       extractCredentials,
       requireAuth,
       validateRequest({
         body: Joi.object({
           name: Joi.string().required(),
-          description: Joi.string().optional(),
-          rules: Joi.array().items(Joi.object({
-            name: Joi.string().required(),
-            condition: Joi.any().required(),
-            action: Joi.string().valid('Allow', 'Deny', 'RequireApproval').required(),
-            priority: Joi.number().required(),
-          })).required(),
+          activityKind: Joi.string().optional(),
+          rule: Joi.any().required(),
+          action: Joi.any().required(),
+          filters: Joi.any().optional(),
         })
       }),
-      this.forwardRequest('POST', '/policies')
+      this.forwardRequest('POST', '/v2/policies')
     );
 
-    router.get('/policies/:id',
+    router.get('/:id',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -46,10 +44,10 @@ export class PolicyEngineRoutes extends BaseRoute {
           id: Joi.string().required(),
         })
       }),
-      this.forwardRequest('GET', '/policies/:id')
+      this.forwardRequest('GET', '/v2/policies/:id')
     );
 
-    router.put('/policies/:id',
+    router.put('/:id',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -57,21 +55,17 @@ export class PolicyEngineRoutes extends BaseRoute {
           id: Joi.string().required(),
         }),
         body: Joi.object({
-          name: Joi.string().optional(),
-          description: Joi.string().optional(),
-          isActive: Joi.boolean().optional(),
-          rules: Joi.array().items(Joi.object({
-            name: Joi.string().required(),
-            condition: Joi.any().required(),
-            action: Joi.string().valid('Allow', 'Deny', 'RequireApproval').required(),
-            priority: Joi.number().required(),
-          })).optional(),
+          name: Joi.string().required(),
+          activityKind: Joi.string().optional(),
+          rule: Joi.any().required(),
+          action: Joi.any().required(),
+          filters: Joi.any().optional(),
         })
       }),
-      this.forwardRequest('PUT', '/policies/:id')
+      this.forwardRequest('PUT', '/v2/policies/:id')
     );
 
-    router.delete('/policies/:id',
+    router.delete('/:id',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -79,53 +73,7 @@ export class PolicyEngineRoutes extends BaseRoute {
           id: Joi.string().required(),
         })
       }),
-      this.forwardRequest('DELETE', '/policies/:id')
-    );
-
-    router.get('/approval-requests',
-      extractCredentials,
-      requireAuth,
-      validateRequest({
-        query: Joi.object({
-          limit: Joi.number().integer().min(1).max(100).default(20),
-          paginationToken: Joi.string().optional(),
-          status: Joi.string().valid('Pending', 'Approved', 'Rejected').optional(),
-        })
-      }),
-      this.forwardRequest('GET', '/approval-requests')
-    );
-
-    router.get('/approval-requests/:id',
-      extractCredentials,
-      requireAuth,
-      validateRequest({
-        params: Joi.object({
-          id: Joi.string().required(),
-        })
-      }),
-      this.forwardRequest('GET', '/approval-requests/:id')
-    );
-
-    router.post('/approval-requests/:id/approve',
-      extractCredentials,
-      requireAuth,
-      validateRequest({
-        params: Joi.object({
-          id: Joi.string().required(),
-        })
-      }),
-      this.forwardRequest('POST', '/approval-requests/:id/approve')
-    );
-
-    router.post('/approval-requests/:id/reject',
-      extractCredentials,
-      requireAuth,
-      validateRequest({
-        params: Joi.object({
-          id: Joi.string().required(),
-        })
-      }),
-      this.forwardRequest('POST', '/approval-requests/:id/reject')
+      this.forwardRequest('DELETE', '/v2/policies/:id')
     );
 
     return router;
