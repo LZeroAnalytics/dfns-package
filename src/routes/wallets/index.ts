@@ -15,8 +15,12 @@ export class WalletRoutes extends BaseRoute {
         body: Joi.object({
           network: Joi.string().required(),
           name: Joi.string().optional(),
-          externalId: Joi.string().optional(),
+          signingKey: Joi.any().optional(),
+          delegateTo: Joi.string().optional(),
+          delayDelegation: Joi.boolean().optional(),
+          validatorId: Joi.string().optional(),
           tags: Joi.array().items(Joi.string()).optional(),
+          externalId: Joi.string().optional(),
         })
       }),
       this.forwardRequest('POST', '/wallets')
@@ -27,7 +31,8 @@ export class WalletRoutes extends BaseRoute {
       requireAuth,
       validateRequest({
         query: Joi.object({
-          limit: Joi.number().integer().min(1).max(100).default(20),
+          owner: Joi.string().optional(),
+          limit: Joi.number().integer().min(1).default(100),
           paginationToken: Joi.string().optional(),
         })
       }),
@@ -91,6 +96,9 @@ export class WalletRoutes extends BaseRoute {
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
+        }),
+        query: Joi.object({
+          netWorth: Joi.string().optional(),
         })
       }),
       this.forwardRequest('GET', '/wallets/:id/assets')
@@ -102,10 +110,6 @@ export class WalletRoutes extends BaseRoute {
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
-        }),
-        query: Joi.object({
-          limit: Joi.number().integer().min(1).max(100).default(20),
-          paginationToken: Joi.string().optional(),
         })
       }),
       this.forwardRequest('GET', '/wallets/:id/nfts')
@@ -119,14 +123,14 @@ export class WalletRoutes extends BaseRoute {
           id: Joi.string().required(),
         }),
         query: Joi.object({
-          limit: Joi.number().integer().min(1).max(100).default(20),
+          limit: Joi.number().integer().min(1).default(100),
           paginationToken: Joi.string().optional(),
         })
       }),
       this.forwardRequest('GET', '/wallets/:id/history')
     );
 
-    router.post('/:id/tag',
+    router.put('/:id/tags',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -137,10 +141,10 @@ export class WalletRoutes extends BaseRoute {
           tags: Joi.array().items(Joi.string()).required(),
         })
       }),
-      this.forwardRequest('POST', '/wallets/:id/tag')
+      this.forwardRequest('PUT', '/wallets/:id/tags')
     );
 
-    router.delete('/:id/untag',
+    router.delete('/:id/tags',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -151,7 +155,7 @@ export class WalletRoutes extends BaseRoute {
           tags: Joi.array().items(Joi.string()).required(),
         })
       }),
-      this.forwardRequest('DELETE', '/wallets/:id/untag')
+      this.forwardRequest('DELETE', '/wallets/:id/tags')
     );
 
     router.post('/:id/transfers',
@@ -187,7 +191,7 @@ export class WalletRoutes extends BaseRoute {
           id: Joi.string().required(),
         }),
         query: Joi.object({
-          limit: Joi.number().integer().min(1).max(100).default(20),
+          limit: Joi.number().integer().min(1).default(100),
           paginationToken: Joi.string().optional(),
         })
       }),
@@ -215,8 +219,17 @@ export class WalletRoutes extends BaseRoute {
         }),
         body: Joi.object({
           kind: Joi.string().required(),
-          transaction: Joi.any().required(),
+          transaction: Joi.any().optional(),
           externalId: Joi.string().optional(),
+          to: Joi.string().optional(),
+          value: Joi.any().optional(),
+          data: Joi.string().optional(),
+          nonce: Joi.any().optional(),
+          gasLimit: Joi.any().optional(),
+          maxFeePerGas: Joi.any().optional(),
+          maxPriorityFeePerGas: Joi.any().optional(),
+          gasPrice: Joi.any().optional(),
+          psbt: Joi.any().optional()
         })
       }),
       this.forwardRequest('POST', '/wallets/:id/transactions')
@@ -230,7 +243,7 @@ export class WalletRoutes extends BaseRoute {
           id: Joi.string().required(),
         }),
         query: Joi.object({
-          limit: Joi.number().integer().min(1).max(100).default(20),
+          limit: Joi.number().integer().min(1).default(100),
           paginationToken: Joi.string().optional(),
         })
       }),
@@ -248,6 +261,49 @@ export class WalletRoutes extends BaseRoute {
       }),
       this.forwardRequest('GET', '/wallets/:id/transactions/:txId')
     );
+
+    router.post('/:id/signatures',
+      extractCredentials,
+      requireAuth,
+      validateRequest({
+        params: Joi.object({
+          id: Joi.string().required(),
+        }),
+      }),
+      this.forwardRequest('POST', '/wallets/:id/signatures')
+    );
+
+    router.post('/import',
+      extractCredentials,
+      requireAuth,
+      validateRequest({
+        body: Joi.object({
+          network: Joi.string().optional(),
+          name: Joi.string().optional(),
+          protocol: Joi.string().optional(),
+          curve: Joi.string().optional(),
+          minSigners: Joi.number().optional(),
+          encryptedShares: Joi.any().optional(),
+        })
+      }),
+      this.forwardRequest('POST', '/wallets/:id/delegate')
+    );
+
+    router.post('/:id/export',
+      extractCredentials,
+      requireAuth,
+      validateRequest({
+        params: Joi.object({
+          id: Joi.string().required(),
+        }),
+        body: Joi.object({
+          encryptionKey: Joi.string().optional(),
+          supportedSchemes: Joi.any().optional(),
+        })
+      }),
+      this.forwardRequest('POST', '/wallets/:id/delegate')
+    );
+
 
     return router;
   }
