@@ -13,11 +13,11 @@ export class KeyRoutes extends BaseRoute {
       requireAuth,
       validateRequest({
         body: Joi.object({
-          scheme: Joi.string().required(),
-          curve: Joi.string().required(),
+          scheme: Joi.string().valid('DH', 'ECDSA', 'EdDSA', 'Schnorr').required(),
+          curve: Joi.string().valid('ed25519', 'secp256k1', 'stark').required(),
           name: Joi.string().optional(),
-          externalId: Joi.string().optional(),
-          tags: Joi.array().items(Joi.string()).optional(),
+          delegateTo: Joi.string().optional(),
+          delayDelegation: Joi.boolean().optional(),
         })
       }),
       this.forwardRequest('POST', '/keys')
@@ -28,7 +28,8 @@ export class KeyRoutes extends BaseRoute {
       requireAuth,
       validateRequest({
         query: Joi.object({
-          limit: Joi.number().integer().min(1).max(100).default(20),
+          owner: Joi.string().optional(),
+          limit: Joi.number().integer().min(1).default(100),
           paginationToken: Joi.string().optional(),
         })
       }),
@@ -54,8 +55,7 @@ export class KeyRoutes extends BaseRoute {
           id: Joi.string().required(),
         }),
         body: Joi.object({
-          name: Joi.string().optional(),
-          externalId: Joi.string().optional(),
+          name: Joi.string().required(),
         })
       }),
       this.forwardRequest('PUT', '/keys/:id')
@@ -94,12 +94,23 @@ export class KeyRoutes extends BaseRoute {
           id: Joi.string().required(),
         }),
         body: Joi.object({
-          kind: Joi.string().valid('Hash', 'Message', 'Transaction', 'Psbt').required(),
+          kind: Joi.string().valid('Hash', 'Message', 'Eip7702', 'Transaction', 'Eip712', 'Psbt', 'Bip322', 'SignDocDirect', 'SignerPayload').required(),
           hash: Joi.string().optional(),
-          message: Joi.string().optional(),
-          transaction: Joi.any().optional(),
+          taprootMerkleRoot: Joi.string().optional(),
+          network: Joi.string().optional(),
+          blockchainKind: Joi.string().optional(),
+          nonce: Joi.number().optional(),
+          chainId: Joi.number().optional(),
+          message: Joi.any().optional(),
+          transaction: Joi.string().optional(),
+          types: Joi.any().optional(),
+          domain: Joi.any().optional(),
           psbt: Joi.string().optional(),
           externalId: Joi.string().optional(),
+          format: Joi.string().optional(),
+          signDoc: Joi.string().optional(),
+          payload: Joi.string().optional(),
+          address: Joi.string().optional(),
         })
       }),
       this.forwardRequest('POST', '/keys/:id/signatures')
@@ -113,7 +124,7 @@ export class KeyRoutes extends BaseRoute {
           id: Joi.string().required(),
         }),
         query: Joi.object({
-          limit: Joi.number().integer().min(1).max(100).default(20),
+          limit: Joi.number().integer().min(1).default(100),
           paginationToken: Joi.string().optional(),
         })
       }),
@@ -130,6 +141,51 @@ export class KeyRoutes extends BaseRoute {
         })
       }),
       this.forwardRequest('GET', '/keys/:id/signatures/:sigId')
+    );
+
+    router.get('/import',
+      extractCredentials,
+      requireAuth,
+      validateRequest({
+        body: Joi.object({
+          name: Joi.string().optional(),
+          curve: Joi.string().valid('ed25519', 'secp256k1', 'stark').required(),
+          protocol: Joi.string().valid('CGGMP21', 'FROST', 'FROST_BITCOIN').required(),
+          minSigners: Joi.number().optional(),
+          encryptedShares: Joi.any().required(),
+        })
+      }),
+      this.forwardRequest('POST', '/keys/import')
+    );
+
+    router.get('/:id/export',
+      extractCredentials,
+      requireAuth,
+      validateRequest({
+        params: Joi.object({
+          id: Joi.string().required(),
+        }),
+        body: Joi.object({
+          encryptionKey: Joi.string().required(),
+          supportedSchemes: Joi.any().optional(),
+        })
+      }),
+      this.forwardRequest('POST', '/keys/:id/export')
+    );
+
+    router.get('/:id/derive',
+      extractCredentials,
+      requireAuth,
+      validateRequest({
+        params: Joi.object({
+          id: Joi.string().required(),
+        }),
+        body: Joi.object({
+          domain: Joi.string().required(),
+          seed: Joi.string().required(),
+        })
+      }),
+      this.forwardRequest('POST', '/keys/:id/derive')
     );
 
     return router;
