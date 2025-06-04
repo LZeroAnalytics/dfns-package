@@ -4,10 +4,11 @@ import { createMulticallService } from '../../utils/multicall';
 import { getTokenCatalog } from '../../utils/token-catalog';
 import { networks } from '../../config';
 import { getWalletAddress } from '../../utils/wallet-address';
+import { extractForwardHeaders } from '../../utils/dfns-api';
 
 export async function getWalletAssets(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const { walletId } = req.params;
+    const { id: walletId } = req.params;
     const networkKey = req.query.network as string || 'ethereum';
 
     if (!networks[networkKey]) {
@@ -34,9 +35,11 @@ export async function getWalletAssets(req: AuthenticatedRequest, res: Response):
       return;
     }
 
+    const forwardHeaders = extractForwardHeaders(req);
+    
     let walletAddress;
     try {
-      walletAddress = await getWalletAddress(req.dfnsCredentials, walletId);
+      walletAddress = await getWalletAddress(req.dfnsCredentials, walletId, forwardHeaders);
     } catch (error) {
       console.error('Error fetching wallet address from DFNS:', error);
       res.status(404).json({

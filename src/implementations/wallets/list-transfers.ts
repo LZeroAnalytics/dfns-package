@@ -2,11 +2,11 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../../middleware/auth';
 import { networks } from '../../config';
 import { ListTransfersResponse } from '../../types/wallets';
-import { DfnsApiHelper } from '../../utils/dfns-api';
+import { DfnsApiHelper, extractForwardHeaders } from '../../utils/dfns-api';
 
 export async function listTransferRequests(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const { walletId } = req.params;
+    const { id: walletId } = req.params;
     const networkKey = req.query.network as string || 'ethereum';
     const limit = parseInt(req.query.limit as string) || 50;
     const paginationToken = req.query.paginationToken as string;
@@ -43,6 +43,8 @@ export async function listTransferRequests(req: AuthenticatedRequest, res: Respo
       return;
     }
 
+    const forwardHeaders = extractForwardHeaders(req);
+    
     let transfersData;
     try {
       const queryParams = new URLSearchParams({
@@ -53,7 +55,9 @@ export async function listTransferRequests(req: AuthenticatedRequest, res: Respo
       transfersData = await DfnsApiHelper.callDfnsApi(
         req.dfnsCredentials,
         'GET',
-        `/wallets/${walletId}/transfers?${queryParams.toString()}`
+        `/wallets/${walletId}/transfers?${queryParams.toString()}`,
+        undefined,
+        forwardHeaders
       );
     } catch (error) {
       console.error('Error fetching transfers from DFNS:', error);
