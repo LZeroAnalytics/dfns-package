@@ -65,6 +65,7 @@ export class DfnsApiServer {
           policyEngine: '/v2/policies',
           policyApprovals: '/v2/policy-approvals',
           permissions: '/permissions',
+          signers: '/signers',
         },
       });
     });

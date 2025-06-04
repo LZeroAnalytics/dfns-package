@@ -9,6 +9,7 @@ import { PolicyEngineRoutes } from './policy-engine';
 import { PermissionRoutes } from './permissions';
 import { CustomLogicHooks } from '@/types/common';
 import { PolicyApprovalRoutes } from '@/routes/policy-approvals';
+import { SignerRoutes } from '@/routes/signers';
 
 export class ApiRoutes {
   private router: Router;
@@ -30,6 +31,7 @@ export class ApiRoutes {
     const policyEngineRoutes = new PolicyEngineRoutes(this.hooks);
     const policyApprovalRoutes = new PolicyApprovalRoutes(this.hooks);
     const permissionRoutes = new PermissionRoutes(this.hooks);
+    const signerRoutes = new SignerRoutes(this.hooks);
 
     this.router.use('/auth', authRoutes.getRouter());
     this.router.use('/wallets', walletRoutes.getRouter());
@@ -40,6 +42,7 @@ export class ApiRoutes {
     this.router.use('/v2/policies', policyEngineRoutes.getRouter());
     this.router.use('/v2/policy-approvals', policyApprovalRoutes.getRouter());
     this.router.use('/permissions', permissionRoutes.getRouter());
+    this.router.use('/signers', signerRoutes.getRouter());
 
     this.router.get('/health', (req, res) => {
       res.json({
