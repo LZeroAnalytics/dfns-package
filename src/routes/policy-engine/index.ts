@@ -57,8 +57,8 @@ export class PolicyEngineRoutes extends BaseRoute {
         body: Joi.object({
           name: Joi.string().required(),
           activityKind: Joi.string().optional(),
-          rule: Joi.any().required(),
-          action: Joi.any().required(),
+          rule: Joi.any().optional(),
+          action: Joi.any().optional(),
           filters: Joi.any().optional(),
         })
       }),

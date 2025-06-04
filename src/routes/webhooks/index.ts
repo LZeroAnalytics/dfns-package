@@ -13,10 +13,10 @@ export class WebhookRoutes extends BaseRoute {
       requireAuth,
       validateRequest({
         body: Joi.object({
-          name: Joi.string().required(),
           url: Joi.string().uri().required(),
-          events: Joi.array().items(Joi.string()).required(),
-          secret: Joi.string().optional(),
+          status: Joi.string().valid('Enabled', 'Disabled').optional(),
+          events: Joi.any().required(),
+          description: Joi.string().optional(),
         })
       }),
       this.forwardRequest('POST', '/webhooks')
@@ -27,7 +27,7 @@ export class WebhookRoutes extends BaseRoute {
       requireAuth,
       validateRequest({
         query: Joi.object({
-          limit: Joi.number().integer().min(1).max(100).default(20),
+          limit: Joi.number().integer().min(1).default(20),
           paginationToken: Joi.string().optional(),
         })
       }),
@@ -53,11 +53,10 @@ export class WebhookRoutes extends BaseRoute {
           id: Joi.string().required(),
         }),
         body: Joi.object({
-          name: Joi.string().optional(),
           url: Joi.string().uri().optional(),
-          events: Joi.array().items(Joi.string()).optional(),
-          secret: Joi.string().optional(),
-          isActive: Joi.boolean().optional(),
+          status: Joi.string().valid('Enabled', 'Disabled').optional(),
+          events: Joi.any().optional(),
+          description: Joi.string().optional(),
         })
       }),
       this.forwardRequest('PUT', '/webhooks/:id')
@@ -74,7 +73,7 @@ export class WebhookRoutes extends BaseRoute {
       this.forwardRequest('DELETE', '/webhooks/:id')
     );
 
-    router.post('/:id/test',
+    router.post('/:id/ping',
       extractCredentials,
       requireAuth,
       validateRequest({
@@ -82,7 +81,35 @@ export class WebhookRoutes extends BaseRoute {
           id: Joi.string().required(),
         })
       }),
-      this.forwardRequest('POST', '/webhooks/:id/test')
+      this.forwardRequest('POST', '/webhooks/:id/ping')
+    );
+
+    router.get('/:id/events/:eventId',
+      extractCredentials,
+      requireAuth,
+      validateRequest({
+        params: Joi.object({
+          id: Joi.string().required(),
+          eventId: Joi.string().required(),
+        })
+      }),
+      this.forwardRequest('GET', '/webhooks/:id/events/:eventId')
+    );
+
+    router.get('/:id/events',
+      extractCredentials,
+      requireAuth,
+      validateRequest({
+        params: Joi.object({
+          id: Joi.string().required(),
+        }),
+        query: Joi.object({
+          limit: Joi.number().integer().min(1).default(20),
+          paginationToken: Joi.string().optional(),
+          deliveryFailed: Joi.boolean().optional(),
+        })
+      }),
+      this.forwardRequest('GET', '/webhooks/:id/events')
     );
 
     return router;
