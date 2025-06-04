@@ -2,6 +2,12 @@ import { Router } from 'express';
 import { BaseRoute } from '../base-route';
 import { validateRequest } from '@/middleware/validation';
 import { requireAuth, extractCredentials } from '@/middleware/auth';
+import { getWalletAssets } from '../../implementations/wallets/get-assets';
+import { getWalletHistory } from '../../implementations/wallets/get-history';
+import { transferAsset } from '../../implementations/wallets/transfer-asset';
+import { broadcastTransaction } from '../../implementations/wallets/broadcast-transaction';
+import { listTransferRequests } from '../../implementations/wallets/list-transfers';
+import { getTransferRequestById } from '../../implementations/wallets/get-transfer';
 import Joi from 'joi';
 
 export class WalletRoutes extends BaseRoute {
@@ -98,10 +104,11 @@ export class WalletRoutes extends BaseRoute {
           id: Joi.string().required(),
         }),
         query: Joi.object({
+          network: Joi.string().optional(),
           netWorth: Joi.string().optional(),
         })
       }),
-      this.forwardRequest('GET', '/wallets/:id/assets')
+      (req, res) => getWalletAssets(req, res)
     );
 
     router.get('/:id/nfts',
@@ -123,11 +130,12 @@ export class WalletRoutes extends BaseRoute {
           id: Joi.string().required(),
         }),
         query: Joi.object({
+          network: Joi.string().optional(),
           limit: Joi.number().integer().min(1).default(100),
           paginationToken: Joi.string().optional(),
         })
       }),
-      this.forwardRequest('GET', '/wallets/:id/history')
+      (req, res) => getWalletHistory(req, res)
     );
 
     router.put('/:id/tags',
@@ -165,6 +173,9 @@ export class WalletRoutes extends BaseRoute {
         params: Joi.object({
           id: Joi.string().required(),
         }),
+        query: Joi.object({
+          network: Joi.string().optional(),
+        }),
         body: Joi.object({
           kind: Joi.string().valid('Native', 'Asa', 'Aip21', 'Erc20', 'Erc721', 'Sep41', 'Spl', 'Spl2022', 'Tep74', 'Trc10', 'Trc20', 'Trc721').required(),
           to: Joi.string().required(),
@@ -180,7 +191,7 @@ export class WalletRoutes extends BaseRoute {
           externalId: Joi.string().optional(),
         })
       }),
-      this.forwardRequest('POST', '/wallets/:id/transfers')
+      (req, res) => transferAsset(req, res)
     );
 
     router.get('/:id/transfers',
@@ -191,11 +202,12 @@ export class WalletRoutes extends BaseRoute {
           id: Joi.string().required(),
         }),
         query: Joi.object({
+          network: Joi.string().optional(),
           limit: Joi.number().integer().min(1).default(100),
           paginationToken: Joi.string().optional(),
         })
       }),
-      this.forwardRequest('GET', '/wallets/:id/transfers')
+      (req, res) => listTransferRequests(req, res)
     );
 
     router.get('/:id/transfers/:transferId',
@@ -205,9 +217,12 @@ export class WalletRoutes extends BaseRoute {
         params: Joi.object({
           id: Joi.string().required(),
           transferId: Joi.string().required(),
+        }),
+        query: Joi.object({
+          network: Joi.string().optional(),
         })
       }),
-      this.forwardRequest('GET', '/wallets/:id/transfers/:transferId')
+      (req, res) => getTransferRequestById(req, res)
     );
 
     router.post('/:id/transactions',
@@ -216,6 +231,9 @@ export class WalletRoutes extends BaseRoute {
       validateRequest({
         params: Joi.object({
           id: Joi.string().required(),
+        }),
+        query: Joi.object({
+          network: Joi.string().optional(),
         }),
         body: Joi.object({
           kind: Joi.string().required(),
@@ -232,7 +250,7 @@ export class WalletRoutes extends BaseRoute {
           psbt: Joi.any().optional()
         })
       }),
-      this.forwardRequest('POST', '/wallets/:id/transactions')
+      (req, res) => broadcastTransaction(req, res)
     );
 
     router.get('/:id/transactions',
