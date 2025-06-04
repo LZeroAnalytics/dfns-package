@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { BaseRoute } from '../base-route';
 import { validateRequest } from '@/middleware/validation';
 import { extractCredentials, requireAuth } from '@/middleware/auth';
+import { getNetworkFees } from '../../implementations/networks/fees';
+import { readContract } from '../../implementations/networks/read-contract';
 import Joi from 'joi';
 
 export class NetworkRoutes extends BaseRoute {
@@ -16,7 +18,7 @@ export class NetworkRoutes extends BaseRoute {
           network: Joi.string().required(),
         })
       }),
-      this.forwardRequest('GET', '/networks/fees')
+      getNetworkFees
     );
 
     router.post('/read-contract',
@@ -30,7 +32,7 @@ export class NetworkRoutes extends BaseRoute {
           data: Joi.string().required(),
         })
       }),
-      this.forwardRequest('POST', '/networks/read-contract')
+      readContract
     );
 
     router.post('/:network/validators',

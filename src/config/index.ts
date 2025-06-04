@@ -19,4 +19,9 @@ export const config = {
     origin: process.env.CORS_ORIGIN || '*',
     credentials: true,
   },
+
+  network: {
+    name: process.env.NETWORK_NAME || 'Ethereum',
+    rpcUrl: process.env.NETWORK_RPC_URL || '',
+  },
 };

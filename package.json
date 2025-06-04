@@ -30,6 +30,7 @@
   "author": "LZero Analytics",
   "license": "MIT",
   "dependencies": {
+    "@dfns/sdk": "0.6.12-rc.1",
     "axios": "^1.6.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -39,6 +40,7 @@
     "jsonwebtoken": "^9.0.2",
     "module-alias": "^2.2.3",
     "morgan": "^1.10.0",
+    "simple-statistics": "^7.8.8",
     "uuid": "^9.0.1",
     "winston": "^3.11.0"
   },
