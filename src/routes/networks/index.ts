@@ -2,8 +2,8 @@ import { Router } from 'express';
 import { BaseRoute } from '../base-route';
 import { validateRequest } from '@/middleware/validation';
 import { extractCredentials, requireAuth } from '@/middleware/auth';
-import { getNetworkFees } from '../../implementations/networks/fees';
-import { readContract } from '../../implementations/networks/read-contract';
+import { getNetworkFees } from '@/implementations/networks/fees';
+import { readContract } from '@/implementations/networks/read-contract';
 import Joi from 'joi';
 
 export class NetworkRoutes extends BaseRoute {

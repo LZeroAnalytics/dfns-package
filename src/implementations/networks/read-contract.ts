@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { rpc } from '../../utils/rpc';
-import { config } from '../../config';
+import { rpc } from '@/utils/rpc';
+import { config } from '@/config';
 import { ReadContractBody, ReadContractResponse } from '../../types/custom-networks';
 
 export async function readContract(req: Request, res: Response): Promise<void> {

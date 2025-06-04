@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { mean } from 'simple-statistics';
-import { rpc } from '../../utils/rpc';
-import { config } from '../../config';
+import { rpc } from '@/utils/rpc';
+import { config } from '@/config';
 import { GetFeesResponse } from '../../types/custom-networks';
 
 export async function getNetworkFees(req: Request, res: Response): Promise<void> {

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { config } from '../config';
+import { config } from '@/config';
 
 export async function rpc(method: string, params: any[], id = 1): Promise<any> {
   const response = await axios.post(config.network.rpcUrl, {
