@@ -1,0 +1,31 @@
+type Token @entity(immutable: true) {
+  id:       ID!
+  symbol:   String!
+  decimals: Int!
+}
+
+type Account @entity(immutable: false) {
+  id: ID!
+  balances: [Balance!]! @derivedFrom(field: "account")
+  nfts:     [NFT!]!     @derivedFrom(field: "owner")
+}
+
+type Balance @entity(immutable: false) {
+  id: ID!
+  account: Account!
+  token:   Token!
+  value:   BigInt!
+}
+
+type NFTContract @entity(immutable: true) {
+  id:     ID!
+  symbol: String!
+}
+
+type NFT @entity(immutable: false) {
+  id:       ID!
+  contract: NFTContract!
+  tokenId:  BigInt!
+  owner:    Account!
+  tokenUri: String!
+}

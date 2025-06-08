@@ -1,4 +1,5 @@
 postgres = import_module("github.com/kurtosis-tech/postgres-package/main.star")
+indexer_launcher = import_module("./src/indexer/indexer_launcher.star")
 
 POSTGRES_MIN_CPU = 10
 POSTGRES_MAX_CPU = 1000
@@ -7,13 +8,8 @@ POSTGRES_MAX_MEMORY = 1024
 
 def run(plan, rpc_url, env="main"):
 
-    graph = import_module("github.com/LZeroAnalytics/graph-package@{}/main.star".format(env))
-
-    # Spin up graph node for network
-    graph_output = graph.run(plan, rpc_url=rpc_url, env=env)
-
-    plan.print(graph_output.graph)
-    plan.print(graph_output.ipfs)
+    # Launch indexer
+    indexer_launcher.launch_indexer(plan, rpc_url, env)
 
     postgres_output = postgres.run(
         plan,

@@ -1,0 +1,9 @@
+{
+  "name": "subgraph",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@graphprotocol/graph-ts": "^0.38.1"
+  }
+}

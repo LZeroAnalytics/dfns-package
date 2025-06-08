@@ -1,0 +1,30 @@
+specVersion: 0.0.6
+schema:
+  file: ./schema.graphql
+
+dataSources:
+  - kind: ethereum
+    name: ERC20Wildcard
+    network: bloctopus
+    source:
+      abi: ERC20
+      startBlock: 0
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Token
+        - Account
+        - Balance
+        - NFTContract
+        - NFT
+      abis:
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: ERC721
+          file: ./abis/ERC721.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/mapping.ts
