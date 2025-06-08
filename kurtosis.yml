@@ -1,0 +1,9 @@
+name: github.com/LZeroAnalytics/dfns-package
+description: |
+  DFNS
+  ======
+  This Kurtosis package instantiates a a full DFNS deployment against specified networks.
+
+  Prerequisites
+  -------------
+  - At least one running EVM network
