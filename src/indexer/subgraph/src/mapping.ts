@@ -8,7 +8,9 @@ import {
   Account,
   Balance,
   NFTContract,
-  NFT
+  NFT,
+  TransferEvent,
+  MintEvent
 } from "../generated/schema";
 
 
@@ -24,11 +26,18 @@ export function handleTransfer(ev: Transfer): void {
     ensureToken(addr, bound20, decResult.value);
     updateFungible(ev.params.from, addr, ev.params.value.neg());
     updateFungible(ev.params.to,   addr, ev.params.value);
+    
+    createTransferEvent(ev, "ERC20");
     return;
   }
 
   /* ─ ERC-721 branch ─ */
   handleNFTTransfer(ev);
+  createTransferEvent(ev, "ERC721");
+  
+  if (ev.params.from.equals(Address.zero())) {
+    createMintEvent(ev);
+  }
 }
 
 /* ──────────────────────  ERC-20 helpers  ───────────────────────── */
@@ -101,4 +110,39 @@ function newAccount(addr: Address): void {
   if (Account.load(addr.toHex()) == null) {
     new Account(addr.toHex()).save();
   }
+}
+
+function createTransferEvent(ev: Transfer, kind: string): void {
+  const transferId = ev.transaction.hash.toHex() + "-" + ev.logIndex.toString();
+  let transferEvent = new TransferEvent(transferId);
+  
+  transferEvent.txHash = ev.transaction.hash.toHex();
+  transferEvent.blockNumber = ev.block.number;
+  transferEvent.timestamp = ev.block.timestamp;
+  transferEvent.from = ev.params.from.toHex();
+  transferEvent.to = ev.params.to.toHex();
+  transferEvent.kind = kind;
+  
+  if (kind == "ERC20") {
+    transferEvent.token = ev.address.toHex();
+    transferEvent.value = ev.params.value;
+  } else {
+    transferEvent.nft = ev.address.toHex() + "/" + ev.params.value.toString();
+    transferEvent.value = BigInt.fromI32(1);
+  }
+  
+  transferEvent.save();
+}
+
+function createMintEvent(ev: Transfer): void {
+  const mintId = ev.transaction.hash.toHex() + "-mint-" + ev.logIndex.toString();
+  let mintEvent = new MintEvent(mintId);
+  
+  mintEvent.txHash = ev.transaction.hash.toHex();
+  mintEvent.blockNumber = ev.block.number;
+  mintEvent.timestamp = ev.block.timestamp;
+  mintEvent.to = ev.params.to.toHex();
+  mintEvent.nft = ev.address.toHex() + "/" + ev.params.value.toString();
+  
+  mintEvent.save();
 }

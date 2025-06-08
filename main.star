@@ -28,3 +28,18 @@ def run(plan, rpc_url, env="main"):
     plan.print(postgres_user)
     plan.print(postgres_hostname)
 
+    # Initialize database schema
+    schema_file = plan.upload_files(
+        src = "./src/database/schema.sql",
+        name = "database-schema"
+    )
+
+    plan.run_sh(
+        run = "PGPASSWORD={} psql -h {} -U {} -d {} -f /schema.sql".format(postgres_password, postgres_hostname, postgres_user, postgres_database),
+        name = "schema-initializer",
+        image = "postgres:15",
+        files = {
+            "/schema.sql": schema_file
+        }
+    )
+
