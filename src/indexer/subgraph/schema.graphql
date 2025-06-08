@@ -29,3 +29,25 @@ type NFT @entity(immutable: false) {
   owner:    Account!
   tokenUri: String!
 }
+
+type TransferEvent @entity(immutable: true) {
+  id: ID!
+  txHash: String!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  from: Account!
+  to: Account!
+  token: Token
+  nft: NFT
+  value: BigInt
+  kind: String!
+}
+
+type MintEvent @entity(immutable: true) {
+  id: ID!
+  txHash: String!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  to: Account!
+  nft: NFT!
+}
