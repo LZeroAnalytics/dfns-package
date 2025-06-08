@@ -19,6 +19,8 @@ dataSources:
         - Balance
         - NFTContract
         - NFT
+        - TransferEvent
+        - MintEvent
       abis:
         - name: ERC20
           file: ./abis/ERC20.json

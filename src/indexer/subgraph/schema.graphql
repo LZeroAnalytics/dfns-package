@@ -41,6 +41,10 @@ type TransferEvent @entity(immutable: true) {
   nft: NFT
   value: BigInt
   kind: String!
+  direction: String!
+  fee: BigInt
+  gasUsed: BigInt
+  gasPrice: BigInt
 }
 
 type MintEvent @entity(immutable: true) {
@@ -50,4 +54,8 @@ type MintEvent @entity(immutable: true) {
   timestamp: BigInt!
   to: Account!
   nft: NFT!
+  direction: String!
+  fee: BigInt
+  gasUsed: BigInt
+  gasPrice: BigInt
 }

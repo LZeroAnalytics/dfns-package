@@ -123,6 +123,14 @@ function createTransferEvent(ev: Transfer, kind: string): void {
   transferEvent.to = ev.params.to.toHex();
   transferEvent.kind = kind;
   
+  transferEvent.direction = "Unknown";
+  
+  const gasUsed = ev.receipt ? ev.receipt.gasUsed : BigInt.zero();
+  const gasPrice = ev.transaction.gasPrice;
+  transferEvent.fee = gasUsed.times(gasPrice);
+  transferEvent.gasUsed = gasUsed;
+  transferEvent.gasPrice = gasPrice;
+  
   if (kind == "ERC20") {
     transferEvent.token = ev.address.toHex();
     transferEvent.value = ev.params.value;
@@ -143,6 +151,14 @@ function createMintEvent(ev: Transfer): void {
   mintEvent.timestamp = ev.block.timestamp;
   mintEvent.to = ev.params.to.toHex();
   mintEvent.nft = ev.address.toHex() + "/" + ev.params.value.toString();
+  
+  mintEvent.direction = "In";
+  
+  const gasUsed = ev.receipt ? ev.receipt.gasUsed : BigInt.zero();
+  const gasPrice = ev.transaction.gasPrice;
+  mintEvent.fee = gasUsed.times(gasPrice);
+  mintEvent.gasUsed = gasUsed;
+  mintEvent.gasPrice = gasPrice;
   
   mintEvent.save();
 }
