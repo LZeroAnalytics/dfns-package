@@ -3,6 +3,7 @@ import { Transfer } from "../generated/ERC20Wildcard/ERC20";
 import { ERC20  } from "../generated/ERC20Wildcard/ERC20";
 import { ERC721 } from "../generated/ERC20Wildcard/ERC721";
 
+
 import {
   Token,
   Account,
@@ -26,7 +27,7 @@ export function handleTransfer(ev: Transfer): void {
     ensureToken(addr, bound20, decResult.value);
     updateFungible(ev.params.from, addr, ev.params.value.neg());
     updateFungible(ev.params.to,   addr, ev.params.value);
-    
+
     createTransferEvent(ev, "ERC20");
     return;
   }
@@ -34,7 +35,7 @@ export function handleTransfer(ev: Transfer): void {
   /* ─ ERC-721 branch ─ */
   handleNFTTransfer(ev);
   createTransferEvent(ev, "ERC721");
-  
+
   if (ev.params.from.equals(Address.zero())) {
     createMintEvent(ev);
   }
@@ -115,22 +116,25 @@ function newAccount(addr: Address): void {
 function createTransferEvent(ev: Transfer, kind: string): void {
   const transferId = ev.transaction.hash.toHex() + "-" + ev.logIndex.toString();
   let transferEvent = new TransferEvent(transferId);
-  
+
   transferEvent.txHash = ev.transaction.hash.toHex();
   transferEvent.blockNumber = ev.block.number;
   transferEvent.timestamp = ev.block.timestamp;
   transferEvent.from = ev.params.from.toHex();
   transferEvent.to = ev.params.to.toHex();
   transferEvent.kind = kind;
-  
+
   transferEvent.direction = "Unknown";
-  
-  const gasUsed = ev.receipt ? ev.receipt.gasUsed : BigInt.zero();
+
+  let gasUsed = BigInt.zero();
+  if (ev.receipt !== null) {
+    gasUsed = ev.receipt!.gasUsed;
+  }
   const gasPrice = ev.transaction.gasPrice;
   transferEvent.fee = gasUsed.times(gasPrice);
   transferEvent.gasUsed = gasUsed;
   transferEvent.gasPrice = gasPrice;
-  
+
   if (kind == "ERC20") {
     transferEvent.token = ev.address.toHex();
     transferEvent.value = ev.params.value;
@@ -138,23 +142,26 @@ function createTransferEvent(ev: Transfer, kind: string): void {
     transferEvent.nft = ev.address.toHex() + "/" + ev.params.value.toString();
     transferEvent.value = BigInt.fromI32(1);
   }
-  
+
   transferEvent.save();
 }
 
 function createMintEvent(ev: Transfer): void {
   const mintId = ev.transaction.hash.toHex() + "-mint-" + ev.logIndex.toString();
   let mintEvent = new MintEvent(mintId);
-  
+
   mintEvent.txHash = ev.transaction.hash.toHex();
   mintEvent.blockNumber = ev.block.number;
   mintEvent.timestamp = ev.block.timestamp;
   mintEvent.to = ev.params.to.toHex();
   mintEvent.nft = ev.address.toHex() + "/" + ev.params.value.toString();
-  
+
   mintEvent.direction = "In";
-  
-  const gasUsed = ev.receipt ? ev.receipt.gasUsed : BigInt.zero();
+
+  let gasUsed = BigInt.zero();
+  if (ev.receipt !== null) {
+    gasUsed = ev.receipt!.gasUsed;
+  }
   const gasPrice = ev.transaction.gasPrice;
   mintEvent.fee = gasUsed.times(gasPrice);
   mintEvent.gasUsed = gasUsed;
