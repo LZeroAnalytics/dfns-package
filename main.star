@@ -35,11 +35,11 @@ def run(plan, rpc_url, env="main"):
     )
 
     plan.run_sh(
-        run = "PGPASSWORD={} psql -h {} -U {} -d {} -f /schema.sql".format(postgres_password, postgres_hostname, postgres_user, postgres_database),
+        run = "PGPASSWORD={} psql -h {} -U {} -d {} -f /database/schema.sql".format(postgres_password, postgres_hostname, postgres_user, postgres_database),
         name = "schema-initializer",
         image = "postgres:15",
         files = {
-            "/schema.sql": schema_file
+            "/database": schema_file
         }
     )
 
