@@ -90,3 +90,20 @@ CREATE INDEX IF NOT EXISTS idx_policy_approvals_status ON policy_approvals(statu
 CREATE INDEX IF NOT EXISTS idx_policy_approvals_activity_id ON policy_approvals(activity_id);
 CREATE INDEX IF NOT EXISTS idx_policy_approval_decisions_approval_id ON policy_approval_decisions(approval_id);
 CREATE INDEX IF NOT EXISTS idx_policy_approval_decisions_user_id ON policy_approval_decisions(user_id);
+
+CREATE TABLE IF NOT EXISTS fee_sponsors (
+    id VARCHAR(255) PRIMARY KEY,
+    wallet_id VARCHAR(255) NOT NULL,
+    network VARCHAR(100) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'Pending',
+    template_address VARCHAR(255) NOT NULL DEFAULT '0xbd77a32e628e69d8b168d3813f019e51d787b569',
+    date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    date_activated TIMESTAMP,
+    date_deactivated TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_fee_sponsors_wallet_id ON fee_sponsors(wallet_id);
+CREATE INDEX IF NOT EXISTS idx_fee_sponsors_status ON fee_sponsors(status);
+CREATE INDEX IF NOT EXISTS idx_fee_sponsors_network ON fee_sponsors(network);
