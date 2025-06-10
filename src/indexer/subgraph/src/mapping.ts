@@ -169,34 +169,3 @@ function createMintEvent(ev: Transfer): void {
   
   mintEvent.save();
 }
-
-export function handleBlock(block: ethereum.Block): void {
-  for (let i = 0; i < block.transactions.length; i++) {
-    const tx = block.transactions[i];
-    
-    if (tx.value.gt(BigInt.zero()) && tx.to !== null) {
-      newAccount(tx.from);
-      newAccount(tx.to as Address);
-      
-      const transferId = tx.hash.toHex() + "-native";
-      let transferEvent = new TransferEvent(transferId);
-      
-      transferEvent.txHash = tx.hash.toHex();
-      transferEvent.blockNumber = block.number;
-      transferEvent.timestamp = block.timestamp;
-      transferEvent.from = tx.from.toHex();
-      transferEvent.to = (tx.to as Address).toHex();
-      transferEvent.value = tx.value;
-      transferEvent.kind = "Native";
-      transferEvent.direction = "Unknown";
-      
-      const gasUsed = tx.gasUsed;
-      const gasPrice = tx.gasPrice;
-      transferEvent.fee = gasUsed.times(gasPrice);
-      transferEvent.gasUsed = gasUsed;
-      transferEvent.gasPrice = gasPrice;
-      
-      transferEvent.save();
-    }
-  }
-}
