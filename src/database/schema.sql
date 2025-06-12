@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS policy_approvals (
     initiator_app_id VARCHAR(255) NOT NULL,
     activity_body JSONB NOT NULL,
     approval_groups JSONB NOT NULL,
+    request_context JSONB,
     date_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     date_resolved TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
