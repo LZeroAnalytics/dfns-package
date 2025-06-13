@@ -24,9 +24,6 @@ def launch_indexer(plan, rpc_url, env):
         description="Waiting for Graph node to be available"
     )
 
-    plan.print(graph_rpc_url)
-    plan.print(graph_ipfs_url)
-
     subgraph_folder = plan.upload_files(
         src = "./subgraph",
         name = "subgraph",
@@ -55,3 +52,6 @@ def launch_indexer(plan, rpc_url, env):
             "/subgraph": subgraph_folder
         }
     )
+
+    graph_http_url = "http://{}:{}/subgraphs/name/{}".format(graph_output.graph.hostname, graph_output.graph.ports["http"].number, subgraph_name)
+    return graph_http_url

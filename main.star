@@ -6,10 +6,10 @@ POSTGRES_MAX_CPU = 1000
 POSTGRES_MIN_MEMORY = 32
 POSTGRES_MAX_MEMORY = 1024
 
-def run(plan, rpc_url, env="main"):
+def run(plan, rpc_url, chain_id, network_type, coingecko_api, env="main"):
 
     # Launch indexer
-    indexer_launcher.launch_indexer(plan, rpc_url, env)
+    graph_http_url = indexer_launcher.launch_indexer(plan, rpc_url, env)
 
     postgres_output = postgres.run(
         plan,
@@ -24,9 +24,7 @@ def run(plan, rpc_url, env="main"):
     postgres_password = postgres_output.password
     postgres_hostname = postgres_output.service.hostname
     postgres_database = postgres_output.database
-
-    plan.print(postgres_user)
-    plan.print(postgres_hostname)
+    postgres_port = postgres_output.port
 
     # Initialize database schema
     schema_file = plan.upload_files(
@@ -41,5 +39,33 @@ def run(plan, rpc_url, env="main"):
         files = {
             "/database": schema_file
         }
+    )
+
+    plan.add_service(
+        name = "dfns-api",
+        config = ServiceConfig(
+            image = "tiljordan/dfns-api:1.0.0",
+            ports = {
+                "http": PortSpec(
+                    number = 3000,
+                    transport_protocol = "TCP",
+                    application_protocol = "http",
+                    wait = None
+                )
+            },
+            env_vars = {
+                "{}_RPC_URL".format(network_type.upper()): rpc_url,
+                "{}_CHAIN_ID".format(network_type.upper()): chain_id,
+                "DATABASE_HOST": postgres_hostname,
+                "DATABASE_PORT": str(postgres_port.number),
+                "DATABASE_USERNAME": postgres_user,
+                "DATABASE_PASSWORD": postgres_password,
+                "DATABASE_NAME": "postgres",
+                "COINGECKO_API_KEY": coingecko_api,
+                "SUBGRAPH_URL": graph_http_url,
+                "DFNS_API_URL": "https://api.dfns.io"
+            }
+        ),
+        description = "Adding Dfns API"
     )
 
